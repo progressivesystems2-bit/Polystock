@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\PolyStock.Core\PolyStock.Core.csproj" />
+    <ProjectReference Include="..\PolyStock.Data\PolyStock.Data.csproj" />
+    <ProjectReference Include="..\PolyStock.Services\PolyStock.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Velopack" Version="1.2.161" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <StartupObject>PolyStock.WPF.Program</StartupObject>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- Application & Package Metadata -->
+    <PackageId>PolyStock</PackageId>
+    <Title>PolyStock</Title>
+    <Product>PolyStock</Product>
+    <Description>Polymer &amp; Commodity Bag Inventory &amp; Sales Management System</Description>
+    <Company>Tauras Technology</Company>
+    <Authors>Tauras Technology</Authors>
+    <Version>1.0.2</Version>
+    <AssemblyVersion>1.0.2</AssemblyVersion>
+    <FileVersion>1.0.2</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\Data\PolyStock.accdb" Condition="Exists('..\..\Data\PolyStock.accdb')">
+      <Link>Data\PolyStock.accdb</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,102 @@
+<UserControl x:Class="PolyStock.WPF.Views.GodownView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="680" d:DesignWidth="1050">
+
+    <Grid Margin="24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="420" />
+            <ColumnDefinition Width="24" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Form Entry -->
+        <Border Grid.Column="0" Style="{StaticResource ModernCard}" VerticalAlignment="Top">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Godown / Warehouse Setup" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,16" />
+
+                    <!-- Code & Name -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Godown Code" Style="{StaticResource FormLabel}" />
+                            <TextBox Text="{Binding Code, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Godown Name *" Style="{StaticResource FormLabel}" />
+                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Location / Address -->
+                    <TextBlock Text="Location / Address" Style="{StaticResource FormLabel}" />
+                    <TextBox Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+
+                    <!-- Contact Person & Phone -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Contact Person" Style="{StaticResource FormLabel}" />
+                            <TextBox Text="{Binding ContactPerson, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Phone / Mobile" Style="{StaticResource FormLabel}" />
+                            <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Active Toggle -->
+                    <CheckBox Content="Active Godown for Inward/Outward Stock" IsChecked="{Binding IsActive}" Margin="0,0,0,14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" />
+
+                    <!-- Notes / Description -->
+                    <TextBlock Text="Notes / Description" Style="{StaticResource FormLabel}" />
+                    <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Margin="0,0,0,20" />
+
+                    <!-- Action Buttons -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="New" Style="{StaticResource SecondaryButton}" Command="{Binding NewCommand}" Margin="0,0,8,0" />
+                        <Button Content="Delete" Style="{StaticResource DangerButton}" Command="{Binding DeleteCommand}" Margin="0,0,8,0" />
+                        <Button Content="Save Godown" Command="{Binding SaveCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Right: Godowns Directory Grid -->
+        <Border Grid.Column="2" Style="{StaticResource ModernCard}">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+                    <TextBlock Text="Godowns &amp; Storage Locations Directory" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="220" HorizontalAlignment="Right" />
+                </DockPanel>
+
+                <DataGrid ItemsSource="{Binding FilteredGodowns}" SelectedItem="{Binding SelectedGodown, Mode=TwoWay, TargetNullValue={x:Null}, FallbackValue={x:Null}}" AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="90" />
+                        <DataGridTextColumn Header="Godown Name" Binding="{Binding Name}" Width="1.8*" />
+                        <DataGridTextColumn Header="Location" Binding="{Binding Location}" Width="2*" />
+                        <DataGridTextColumn Header="Contact Person" Binding="{Binding ContactPerson}" Width="1.2*" />
+                        <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="110" />
+                        <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="65" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

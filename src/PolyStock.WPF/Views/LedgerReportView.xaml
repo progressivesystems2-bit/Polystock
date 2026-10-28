@@ -1,0 +1,416 @@
+<UserControl x:Class="PolyStock.WPF.Views.LedgerReportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:PolyStock.WPF.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="780" d:DesignWidth="1200"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType"
+             TextOptions.TextHintingMode="Fixed"
+             PreviewKeyDown="UserControl_PreviewKeyDown">
+
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+
+        <Style x:Key="LinkButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter VerticalAlignment="Center" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <!-- 0. Mode Switcher & Top Actions -->
+            <RowDefinition Height="Auto" />
+            <!-- 1. Active Report Workspace -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 0. TOP TOOLBAR: VIEW SWITCHER (GROUP SUMMARY vs INDIVIDUAL STATEMENT) -->
+        <Border Grid.Row="0" Style="{StaticResource ModernCard}" Margin="0,0,0,12" Padding="14,10">
+            <DockPanel>
+                <!-- Segmented View Switcher -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <RadioButton Content="📊 Group Summary Report"
+                                 IsChecked="{Binding IsGroupReportSelected, Mode=TwoWay}"
+                                 Style="{StaticResource {x:Type ToggleButton}}"
+                                 Padding="16,8"
+                                 FontWeight="Bold"
+                                 FontSize="13"
+                                 Margin="0,0,8,0" />
+
+                    <RadioButton Content="📒 Individual Ledger Statement"
+                                 IsChecked="{Binding IsIndividualStatementSelected, Mode=TwoWay}"
+                                 Style="{StaticResource {x:Type ToggleButton}}"
+                                 Padding="16,8"
+                                 FontWeight="Bold"
+                                 FontSize="13" />
+                </StackPanel>
+
+                <!-- Right: Refresh & Print -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="🖨 Print Statement"
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding PrintStatementCommand}"
+                            Visibility="{Binding IsIndividualStatementSelected, Converter={StaticResource BoolToVisConverter}}"
+                            Margin="0,0,8,0" />
+                    <Button Content="🔄 Refresh Data" Style="{StaticResource SecondaryButton}" Command="{Binding RefreshCommand}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- 1. ACTIVE REPORT CANVAS -->
+        <Grid Grid.Row="1">
+            <!-- ========================================== -->
+            <!-- VIEW A: GROUP SUMMARY REPORT               -->
+            <!-- ========================================== -->
+            <Border Style="{StaticResource ModernCard}"
+                    Padding="16,12"
+                    Visibility="{Binding IsGroupReportSelected, Converter={StaticResource BoolToVisConverter}}">
+                <DockPanel>
+                    <!-- Filter Toolbar -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Group Type Selector -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Account Group" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding GroupTypes}"
+                                      SelectedItem="{Binding SelectedGroupType, Mode=TwoWay}"
+                                      Height="32" />
+                        </StackPanel>
+
+                        <!-- From Date -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="From Date (Optional)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,2" />
+                            <DatePicker SelectedDate="{Binding GroupFromDate, Mode=TwoWay}" Height="32" />
+                        </StackPanel>
+
+                        <!-- To Date -->
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="To Date (Optional)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,2" />
+                            <DatePicker SelectedDate="{Binding GroupToDate, Mode=TwoWay}" Height="32" />
+                        </StackPanel>
+
+                        <!-- Search Box -->
+                        <StackPanel Grid.Column="6">
+                            <TextBlock Text="Search Accounts (Name / GSTIN / Phone)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,2" />
+                            <TextBox Text="{Binding GroupSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+                        </StackPanel>
+
+                        <!-- Accounts Count & View Button -->
+                        <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Bottom">
+                            <Button Content="🔍 View Statement (Enter)"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding DrillDownAccountCommand}"
+                                    Padding="12,4"
+                                    Height="32"
+                                    FontSize="12"
+                                    FontWeight="Bold"
+                                    Margin="0,0,8,0"
+                                    ToolTip="View statement for selected account (Enter / Double-click)" />
+                            <Border Background="{DynamicResource PanelBrush}" CornerRadius="4" Padding="12,4" Height="32">
+                                <TextBlock Text="{Binding FilteredGroupAccounts.Count, StringFormat='{}{0} Ledgers'}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Bottom KPI Summary Row -->
+                    <Border DockPanel.Dock="Bottom" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,12,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="1.4*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="GROUP TOTALS:" FontWeight="Black" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="TOTAL ADDED (+)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                                <TextBlock Text="{Binding TotalGroupDebit, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SuccessBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="TOTAL DEDUCTED (-)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                                <TextBlock Text="{Binding TotalGroupCredit, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" FontSize="13" Foreground="#EF4444" Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="3" HorizontalAlignment="Right">
+                                <TextBlock Text="NET GROUP CLOSING (+/-)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding FormattedTotalGroupClosing}" FontWeight="Black" FontSize="14" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Group DataGrid -->
+                    <DataGrid x:Name="GroupDataGrid"
+                              ItemsSource="{Binding FilteredGroupAccounts}"
+                              SelectedItem="{Binding SelectedGroupAccount, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowHeight="38"
+                              FontSize="13"
+                              PreviewKeyDown="GroupDataGrid_PreviewKeyDown">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <EventSetter Event="MouseDoubleClick" Handler="GroupRow_MouseDoubleClick" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <Setter Property="ToolTip" Value="Double-click or press Enter to view this account's ledger statement" />
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Account / Party Name" Width="1.8*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding AccountName}"
+                                                   FontWeight="Bold"
+                                                   FontSize="13"
+                                                   Foreground="#1E40AF"
+                                                   VerticalAlignment="Center"
+                                                   Margin="6,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Group Type" Binding="{Binding AccountType}" Width="100" />
+                            <DataGridTextColumn Header="Opening Bal" Binding="{Binding FormattedOpeningBalance}" Width="120" />
+                            <DataGridTextColumn Header="+ In / Billed" Binding="{Binding FormattedPeriodDebit}" FontWeight="SemiBold" Width="130" />
+                            <DataGridTextColumn Header="- Out / Paid" Binding="{Binding FormattedPeriodCredit}" FontWeight="SemiBold" Width="130" />
+                            <DataGridTextColumn Header="Closing Balance (+/-)" Binding="{Binding FormattedPeriodClosing}" FontWeight="Black" Width="150" />
+                            <DataGridTextColumn Header="GSTIN / Phone" Binding="{Binding GSTIN}" Width="1.2*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+
+            <!-- ========================================== -->
+            <!-- VIEW B: INDIVIDUAL LEDGER STATEMENT        -->
+            <!-- ========================================== -->
+            <Border Style="{StaticResource ModernCard}"
+                    Padding="16,12"
+                    Visibility="{Binding IsIndividualStatementSelected, Converter={StaticResource BoolToVisConverter}}">
+                <DockPanel>
+                    <!-- Statement Filter Bar -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <!-- Account Picker -->
+                            <ColumnDefinition Width="280" />
+                            <ColumnDefinition Width="12" />
+                            <!-- Date Preset -->
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="12" />
+                            <!-- From Date -->
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="12" />
+                            <!-- To Date -->
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Account Selector -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Select Account / Party *" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AllAccounts}"
+                                      SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
+                                      DisplayMemberPath="AccountName"
+                                      Height="34" />
+                        </StackPanel>
+
+                        <!-- Date Preset -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Period Preset" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding DateRangePresets}"
+                                      SelectedItem="{Binding DateRangePreset, Mode=TwoWay}"
+                                      Height="34" />
+                        </StackPanel>
+
+                        <!-- From Date -->
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="From Date" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,2" />
+                            <DatePicker SelectedDate="{Binding StatementFromDate, Mode=TwoWay}" Height="34" />
+                        </StackPanel>
+
+                        <!-- To Date -->
+                        <StackPanel Grid.Column="6">
+                            <TextBlock Text="To Date" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,2" />
+                            <DatePicker SelectedDate="{Binding StatementToDate, Mode=TwoWay}" Height="34" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Account Profile & KPI Summary Badges -->
+                    <Border DockPanel.Dock="Top" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <!-- Account Details -->
+                                <ColumnDefinition Width="1.6*" />
+                                <ColumnDefinition Width="12" />
+                                <!-- Opening -->
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <!-- Debits -->
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <!-- Credits -->
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <!-- Closing -->
+                                <ColumnDefinition Width="1.2*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Account Details -->
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding SelectedAccount.AccountName}" FontWeight="Black" FontSize="15" Foreground="{DynamicResource PrimaryTextBrush}" />
+                                <TextBlock Text="{Binding SelectedAccount.AccountType, StringFormat='Account Type: {0}'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding SelectedAccount.GSTIN, StringFormat='GSTIN: {0}', TargetNullValue='GSTIN: -'}" FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <!-- Opening Balance -->
+                            <Border Grid.Column="2" Style="{StaticResource StatBadge}" Padding="10,6">
+                                <StackPanel>
+                                    <TextBlock Text="OPENING BAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                                    <TextBlock Text="{Binding FormattedStatementOpening}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Debits -->
+                            <Border Grid.Column="4" Style="{StaticResource StatBadge}" Padding="10,6">
+                                <StackPanel>
+                                    <TextBlock Text="+ PERIOD ADDED" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                                    <TextBlock Text="{Binding StatementTotalDebit, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SuccessBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Credits -->
+                            <Border Grid.Column="6" Style="{StaticResource StatBadge}" Padding="10,6">
+                                <StackPanel>
+                                    <TextBlock Text="- PERIOD DEDUCTED" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                                    <TextBlock Text="{Binding StatementTotalCredit, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" FontSize="13" Foreground="#EF4444" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Net Closing -->
+                            <Border Grid.Column="8" Style="{StaticResource StatBadge}" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource AccentBrush}" Padding="12,6">
+                                <StackPanel HorizontalAlignment="Right">
+                                    <TextBlock Text="NET CLOSING BAL (+/-)" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" />
+                                    <TextBlock Text="{Binding FormattedStatementClosing}" FontWeight="Black" FontSize="14" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Drill-Down Navigation & Quick Actions Banner -->
+                    <Border DockPanel.Dock="Top" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,10">
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="⬅ Back to Groups (Esc)"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding BackToGroupReportCommand}"
+                                        Padding="12,5"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Margin="0,0,12,0" />
+                                <TextBlock Text="✦ Tally Flow: Double-click any row (or press Enter) to open source bill/voucher • Press Esc to go back"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="#1E40AF"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <Button Content="🔍 Open Voucher / Bill (Enter)"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding OpenTransactionCommand}"
+                                    IsEnabled="{Binding CanOpenSelectedTransaction}"
+                                    HorizontalAlignment="Right"
+                                    Padding="14,6"
+                                    FontSize="12"
+                                    FontWeight="Bold" />
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Individual Statement Table -->
+                    <DataGrid x:Name="StatementDataGrid"
+                              ItemsSource="{Binding StatementEntries}"
+                              SelectedItem="{Binding SelectedStatementEntry, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowHeight="38"
+                              FontSize="13"
+                              PreviewKeyDown="StatementDataGrid_PreviewKeyDown">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <EventSetter Event="MouseDoubleClick" Handler="StatementRow_MouseDoubleClick" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <Setter Property="ToolTip" Value="Double-click or press Enter to open this bill/voucher" />
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat='{}{0:dd-MMM-yyyy}'}" Width="105" />
+                            
+                            <!-- Type Badge -->
+                            <DataGridTemplateColumn Header="Type" Width="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{Binding TypeBadgeColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding TransactionType}" FontWeight="Bold" FontSize="11" Foreground="#FFFFFF" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Ref / Voucher # (Interactive Clickable Link) -->
+                            <DataGridTemplateColumn Header="Ref / Voucher #" Width="145">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource LinkButton}"
+                                                Command="{Binding DataContext.OpenTransactionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip="Click or double-click to open this bill/voucher">
+                                            <TextBlock Text="{Binding RefNo}"
+                                                       FontWeight="Bold"
+                                                       FontSize="13"
+                                                       Foreground="#2563EB"
+                                                       TextDecorations="Underline"
+                                                       Margin="4,0" />
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="Particulars" Binding="{Binding Particulars}" Width="1.8*" />
+                            <DataGridTextColumn Header="+ In / Billed" Binding="{Binding FormattedDebit}" FontWeight="SemiBold" Width="115" />
+                            <DataGridTextColumn Header="- Out / Paid" Binding="{Binding FormattedCredit}" FontWeight="SemiBold" Width="115" />
+                            <DataGridTextColumn Header="Balance (+/-)" Binding="{Binding FormattedRunningBalance}" FontWeight="Black" Width="135" />
+                            <DataGridTextColumn Header="Narration / Remarks" Binding="{Binding Narration}" Width="1.4*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,545 @@
+<UserControl x:Class="PolyStock.WPF.Views.SalesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:PolyStock.WPF.Converters"
+             xmlns:ctrl="clr-namespace:PolyStock.WPF.Controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="750" d:DesignWidth="1250"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType"
+             TextOptions.TextHintingMode="Fixed"
+             Loaded="UserControl_Loaded"
+             IsVisibleChanged="UserControl_IsVisibleChanged"
+             PreviewKeyDown="UserControl_PreviewKeyDown">
+
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter" />
+        <conv:WeightConverter x:Key="WeightConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!-- Payment Mode Pill RadioButton Style -->
+        <Style x:Key="PaymentModePillStyle" TargetType="RadioButton">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="pillBorder"
+                                Background="{DynamicResource PanelBrush}"
+                                BorderBrush="{DynamicResource CardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="14"
+                                Padding="12,5"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter x:Name="pillContent"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              TextElement.FontWeight="SemiBold"
+                                              TextElement.FontSize="12"
+                                              TextElement.Foreground="{DynamicResource SecondaryTextBrush}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="pillBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="pillBorder" Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="pillBorder" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="pillBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="pillContent" Property="TextElement.Foreground" Value="#FFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <!-- 0. Top Toolbar: Action Buttons & Load Bill ComboBox -->
+            <RowDefinition Height="Auto" />
+            <!-- 1. Invoice & Customer Meta Card -->
+            <RowDefinition Height="Auto" />
+            <!-- 2. Dual Quantity Line Items Grid -->
+            <RowDefinition Height="*" />
+            <!-- 3. Bottom Summary & Totals -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 0. TOP TOOLBAR: BILL ACTIONS & LOAD BILL COMBOBOX -->
+        <Border Grid.Row="0" Style="{StaticResource ModernCard}" Margin="0,0,0,12" Padding="14,10">
+            <DockPanel LastChildFill="False">
+                <!-- Right: Action Buttons (AddNew, Save, Modify, Cancel, Print, List) -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- AddNew Button -->
+                    <Button x:Name="AddNewButton" Content="➕ Add New (Ctrl+N)" Style="{StaticResource SecondaryButton}" Command="{Binding AddNewCommand}" Margin="0,0,8,0" ToolTip="Clear and start a fresh bill (Ctrl+N)" />
+
+                    <!-- Save Button -->
+                    <Button Content="💾 Save (F8 / Ctrl+A)" Style="{StaticResource SuccessButton}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" Margin="0,0,8,0" ToolTip="Save bill (F8 / Ctrl+A / Ctrl+S)" />
+
+                    <!-- Modify Button -->
+                    <Button Content="✏ Modify (Ctrl+M)" Style="{StaticResource AccentButton}" Command="{Binding ModifyCommand}" IsEnabled="{Binding CanModify}" Margin="0,0,8,0" ToolTip="Unlock loaded bill for modification (Ctrl+M)" />
+
+                    <!-- Cancel Button -->
+                    <Button Content="✕ Cancel (Esc)" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" IsEnabled="{Binding CanCancel}" Margin="0,0,8,0" ToolTip="Discard changes and lock form (Esc)" />
+
+                    <!-- Print Button -->
+                    <Button Content="🖨 Print (F9 / Ctrl+P)" Style="{StaticResource SecondaryButton}" Command="{Binding PrintCommand}" Margin="0,0,8,0" ToolTip="Print Tax Invoice Preview (F9 / Ctrl+P)" />
+
+                    <!-- List Button -->
+                    <Button Content="📋 History (Ctrl+L)" Style="{StaticResource SecondaryButton}" Command="{Binding ListCommand}" ToolTip="Open Invoices &amp; Register List (Ctrl+L)" />
+                </StackPanel>
+
+                <!-- Left: Load Bill ComboBox -->
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Load Bill:" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <ComboBox ItemsSource="{Binding AllBills}"
+                              SelectedItem="{Binding SelectedBill, Mode=TwoWay}"
+                              Width="240" Height="34"
+                              ToolTip="Select an existing bill to view, modify, or print">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding InvoiceNo}" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding CustomerName}" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding TotalAmount, Converter={StaticResource CurrencyConverter}}" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- 1. INVOICE & CUSTOMER INFO HEADER CARD -->
+        <Border Grid.Row="1" Style="{StaticResource ModernCard}" Margin="0,0,0,12" Padding="16,10">
+            <StackPanel>
+                <!-- Card Header: Title & Status Mode Badge -->
+                <DockPanel Margin="0,0,0,8">
+                    <TextBlock Text="Customer &amp; Invoice Information" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                    <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10,4">
+                        <TextBlock Text="{Binding BillStatusText}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource AccentBrush}" />
+                    </Border>
+                </DockPanel>
+
+                <Grid Margin="0,0,0,8" IsEnabled="{Binding IsFormActive}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.5*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="1.2*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="1.2*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Customer Name (Editable ComboBox with Auto-complete / Selection) -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Customer / Buyer Name *" Style="{StaticResource FormLabel}" />
+                        <ComboBox x:Name="CustomerCombo"
+                                  ItemsSource="{Binding AllAccounts}"
+                                  Text="{Binding CustomerName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                  DisplayMemberPath="AccountName"
+                                  SelectedValuePath="AccountName"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="True"
+                                  PreviewKeyDown="CustomerCombo_PreviewKeyDown"
+                                  ToolTip="Select registered account or type customer name (Enter moves to Godown)" />
+                    </StackPanel>
+
+                    <!-- Bill-Level Godown Selection -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Godown / Warehouse *" Style="{StaticResource FormLabel}" />
+                        <ComboBox x:Name="GodownCombo"
+                                  ItemsSource="{Binding AllGodowns}"
+                                  SelectedItem="{Binding SelectedGodown, Mode=TwoWay}"
+                                  DisplayMemberPath="Name"
+                                  PreviewKeyDown="GodownCombo_PreviewKeyDown"
+                                  ToolTip="Selecting godown here automatically copies to all lines in this bill (Enter moves to Invoice #)" />
+                    </StackPanel>
+
+                    <!-- Invoice No -->
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="Invoice No *" Style="{StaticResource FormLabel}" />
+                        <TextBox x:Name="InvoiceNoBox"
+                                 Text="{Binding InvoiceNo, UpdateSourceTrigger=PropertyChanged}"
+                                 FontWeight="Bold"
+                                 Foreground="{DynamicResource AccentBrush}"
+                                 PreviewKeyDown="InvoiceNoBox_PreviewKeyDown" />
+                    </StackPanel>
+
+                    <!-- Sale Date -->
+                    <StackPanel Grid.Column="6">
+                        <TextBlock Text="Sale Date *" Style="{StaticResource FormLabel}" />
+                        <DatePicker x:Name="SaleDatePicker"
+                                    SelectedDate="{Binding SaleDate}"
+                                    Height="38"
+                                    PreviewKeyDown="SaleDatePicker_PreviewKeyDown" />
+                    </StackPanel>
+
+                    <!-- Notes / Destination -->
+                    <StackPanel Grid.Column="8">
+                        <TextBlock Text="Remarks / Destination" Style="{StaticResource FormLabel}" />
+                        <TextBox x:Name="NotesBox"
+                                 Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewKeyDown="NotesBox_PreviewKeyDown" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Keyboard Hint Bar -->
+                <Border Background="{DynamicResource PanelBrush}" CornerRadius="4" Padding="10,5">
+                    <TextBlock Text="✦ Fast Keys: Enter (Next / Rapid Item➔Bags➔Rate) • Shift+Enter Loose kg • F2 Date • F3 Party • F4 Items • F7 Taxes • F8 Save • F9 Print • Esc Clear Line • Ctrl+Del Delete Row"
+                               FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- 2. SALES BILLING LINE ITEMS GRID -->
+        <Border Grid.Row="2" Style="{StaticResource ModernCard}" Margin="0,0,0,12" IsEnabled="{Binding IsFormActive}">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Sales Items (Dual Quantity: Full Bags or Loose Kg)" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Text="💡 Type in 'Bags' for full bag sales OR type in 'Loose (kg)' for cut bag sales. Godown can be customized per line." FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <Button Content="+ Add Sale Line" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource SecondaryButton}" Command="{Binding AddLineCommand}" />
+                </DockPanel>
+
+                <DataGrid x:Name="SalesGrid"
+                          ItemsSource="{Binding Lines}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          RowHeight="42"
+                          PreviewKeyDown="SalesGrid_PreviewKeyDown">
+                    <DataGrid.Columns>
+                        <!-- Item Selector -->
+                        <DataGridTemplateColumn Header="Item Name" Width="1.8*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:SearchableItemBox x:Name="LineItemCombo"
+                                                            AllItems="{Binding DataContext.AllItems, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            SelectedItem="{Binding Item, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                            PriorityHeadGroupId="{Binding PriorityHeadGroupId}"
+                                                            PriorityBrandId="{Binding PriorityBrandId}"
+                                                            SearchPrefix="{Binding SearchPrefix}"
+                                                            ItemCommitted="LineItemBox_ItemCommitted" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Item-Level Godown Override -->
+                        <DataGridTemplateColumn Header="Godown" Width="1.3*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox x:Name="LineGodownCombo"
+                                              ItemsSource="{Binding DataContext.AllGodowns, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              SelectedItem="{Binding SelectedGodown, Mode=TwoWay}"
+                                              DisplayMemberPath="Name"
+                                              PreviewKeyDown="LineGodownCombo_PreviewKeyDown"
+                                              ToolTip="Godown for this specific item line" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Pack Size (Select in-stock pack size or type any custom bag weight) -->
+                        <DataGridTemplateColumn Header="Pack Size (kg)" Width="1.1*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox x:Name="LinePackSizeCombo"
+                                              ItemsSource="{Binding AvailablePackSizes}"
+                                              Text="{Binding PackSizeText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                              IsEditable="True"
+                                              PreviewKeyDown="LinePackSizeCombo_PreviewKeyDown"
+                                              ToolTip="Select in-stock bag weight or type any custom kg pack size" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Live Stock Badge & Bag Morph Preview -->
+                        <DataGridTemplateColumn Header="Available In Stock" Width="2*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource PanelBrush}" CornerRadius="4" Padding="8,4" Margin="0,2" VerticalAlignment="Center">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding StockStatusText}" FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsStockInsufficient}" Value="True">
+                                                                <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding MorphedBagPreviewText}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Bags Sold (Input 1) -->
+                        <DataGridTemplateColumn Header="Bags (Full)" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox x:Name="LineBagsBox"
+                                             Text="{Binding BagsSold, UpdateSourceTrigger=PropertyChanged}"
+                                             FontWeight="Bold"
+                                             TextAlignment="Right"
+                                             PreviewKeyDown="LineBagsBox_PreviewKeyDown" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Loose Kg Sold (Input 2) -->
+                        <DataGridTemplateColumn Header="Loose (kg)" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox x:Name="LineLooseBox"
+                                             Text="{Binding LooseKgSold, UpdateSourceTrigger=PropertyChanged}"
+                                             FontWeight="Bold"
+                                             TextAlignment="Right"
+                                             PreviewKeyDown="LineLooseBox_PreviewKeyDown" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Total Weight (Auto Computed) -->
+                        <DataGridTemplateColumn Header="Total Weight" Width="1.1*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding TotalKgSold, Converter={StaticResource WeightConverter}}" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Rate per kg -->
+                        <DataGridTemplateColumn Header="Rate / kg (₹)" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox x:Name="LineRateBox"
+                                             Text="{Binding RatePerKg, UpdateSourceTrigger=PropertyChanged}"
+                                             TextAlignment="Right"
+                                             PreviewKeyDown="LineRateBox_PreviewKeyDown" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Total Line Amount -->
+                        <DataGridTemplateColumn Header="Amount (₹)" Width="1.2*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Amount, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Remove Action -->
+                        <DataGridTemplateColumn Header="" Width="45">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="✕" Style="{StaticResource DangerButton}" Padding="6,3"
+                                            Focusable="False"
+                                            Command="{Binding DataContext.RemoveLineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+
+        <!-- 3. BOTTOM SUMMARY & BILL-LEVEL CHARGES / TAXES CARD -->
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Padding="16,12">
+            <StackPanel>
+                <!-- Row 1: Quantity Stats & Bill-Level Charges Grid -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <!-- Quantities summary -->
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <!-- Charges inputs -->
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Quantities breakdown -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Style="{StaticResource StatBadge}" Margin="0,0,8,0" Padding="10,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Full Bags: " Foreground="{DynamicResource SecondaryTextBrush}" FontWeight="SemiBold" FontSize="11" />
+                                <TextBlock Text="{Binding TotalBags}" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="12" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource StatBadge}" Margin="0,0,8,0" Padding="10,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Loose: " Foreground="{DynamicResource SecondaryTextBrush}" FontWeight="SemiBold" FontSize="11" />
+                                <TextBlock Text="{Binding TotalLooseKg, Converter={StaticResource WeightConverter}}" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="12" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource StatBadge}" Padding="10,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Total Weight: " Foreground="{DynamicResource SecondaryTextBrush}" FontWeight="SemiBold" FontSize="11" />
+                                <TextBlock Text="{Binding TotalWeightKg, Converter={StaticResource WeightConverter}}" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" FontSize="12" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Right: Bill-Level GST (Vice-Versa), Freight, Loading/Unloading -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" IsEnabled="{Binding IsFormActive}">
+                        <!-- Subtotal -->
+                        <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
+                            <TextBlock Text="Items SubTotal" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding SubTotal, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource PrimaryTextBrush}" />
+                        </StackPanel>
+
+                        <!-- GST % -->
+                        <StackPanel Margin="0,0,8,0" VerticalAlignment="Center" Width="70">
+                            <TextBlock Text="GST %" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBox x:Name="GstPercentBox"
+                                     Text="{Binding GstPercent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     TextAlignment="Right" Height="40" FontWeight="SemiBold"
+                                     PreviewKeyDown="GstPercentBox_PreviewKeyDown"
+                                     ToolTip="GST % (Enter moves to GST Amount)" />
+                        </StackPanel>
+
+                        <!-- GST Amount (₹) -->
+                        <StackPanel Margin="0,0,12,0" VerticalAlignment="Center" Width="95">
+                            <TextBlock Text="GST Amount (₹)" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBox x:Name="GstAmountBox"
+                                     Text="{Binding GstAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     TextAlignment="Right" Height="40" FontWeight="Bold"
+                                     Foreground="{DynamicResource AccentBrush}"
+                                     PreviewKeyDown="GstAmountBox_PreviewKeyDown"
+                                     ToolTip="GST Amount (Enter moves to Freight)" />
+                        </StackPanel>
+
+                        <!-- Freight (₹) -->
+                        <StackPanel Margin="0,0,8,0" VerticalAlignment="Center" Width="90">
+                            <TextBlock Text="Freight (₹)" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBox x:Name="FreightBox"
+                                     Text="{Binding Freight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     TextAlignment="Right" Height="40" FontWeight="SemiBold"
+                                     PreviewKeyDown="FreightBox_PreviewKeyDown"
+                                     ToolTip="Freight / Transport Charges (Enter moves to Loading)" />
+                        </StackPanel>
+
+                        <!-- Loading & Unloading (₹) -->
+                        <StackPanel Margin="0,0,12,0" VerticalAlignment="Center" Width="100">
+                            <TextBlock Text="Loading/Unload (₹)" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBox x:Name="LoadingUnloadingBox"
+                                     Text="{Binding LoadingUnloading, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     TextAlignment="Right" Height="40" FontWeight="SemiBold"
+                                     PreviewKeyDown="LoadingUnloadingBox_PreviewKeyDown"
+                                     ToolTip="Loading and Unloading Charges (Enter moves to Save)" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+                <Separator Background="{DynamicResource SeparatorBrush}" Margin="0,4,0,8" />
+
+                <!-- Row 1.5: Payment Mode Selector Bar (Option C: Hybrid Inline + Split Modal) -->
+                <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,0,10" IsEnabled="{Binding IsFormActive}">
+                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Mode Radio Pills -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,14,2">
+                            <TextBlock Text="Payment Mode:" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            
+                            <RadioButton Content="💳 Credit" 
+                                         GroupName="SalePaymentMode" 
+                                         IsChecked="{Binding IsCreditMode, Mode=TwoWay}"
+                                         Style="{StaticResource PaymentModePillStyle}" />
+                            <RadioButton Content="💵 Cash" 
+                                         GroupName="SalePaymentMode" 
+                                         IsChecked="{Binding IsCashMode, Mode=TwoWay}"
+                                         Style="{StaticResource PaymentModePillStyle}" />
+                            <RadioButton Content="📱 UPI / QR" 
+                                         GroupName="SalePaymentMode" 
+                                         IsChecked="{Binding IsUpiMode, Mode=TwoWay}"
+                                         Style="{StaticResource PaymentModePillStyle}" />
+                            <RadioButton Content="⚖ Split" 
+                                         GroupName="SalePaymentMode" 
+                                         IsChecked="{Binding IsSplitMode, Mode=TwoWay}"
+                                         Style="{StaticResource PaymentModePillStyle}" />
+                        </StackPanel>
+
+                        <!-- Dynamic Contextual Mode Controls -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,2">
+                            <!-- UPI Controls -->
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding IsUpiMode, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
+                                <TextBlock Text="Account:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                <ComboBox Width="180" Height="30" VerticalContentAlignment="Center"
+                                          ItemsSource="{Binding BankUpiAccounts}"
+                                          SelectedItem="{Binding SelectedBankUpiAccount, Mode=TwoWay}"
+                                          DisplayMemberPath="AccountName"
+                                          ToolTip="Select Bank / UPI QR Account for receipt" />
+                                
+                                <TextBlock Text="Ref / UTR #:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="10,0,6,0" />
+                                <TextBox Width="130" Height="30" VerticalContentAlignment="Center"
+                                         Text="{Binding UtrRefNo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="UPI Transaction Ref / UTR number (Optional)" />
+                            </StackPanel>
+
+                            <!-- Split Controls -->
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding IsSplitMode, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
+                                <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
+                                    <TextBlock Text="{Binding SplitSummaryText}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                                </Border>
+                                <Button Content="⚙ Edit Split..." 
+                                        Command="{Binding OpenSplitDialogCommand}" 
+                                        Style="{StaticResource SecondaryButton}" 
+                                        Height="28" Padding="10,0" />
+                            </StackPanel>
+
+                            <!-- Cash Info -->
+                            <TextBlock Visibility="{Binding IsCashMode, Converter={StaticResource BoolToVis}}"
+                                       Text="✓ Cash drawer receipt — customer balance cleared" 
+                                       Foreground="{DynamicResource SuccessBrush}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+
+                            <!-- Credit Info -->
+                            <TextBlock Visibility="{Binding IsCreditMode, Converter={StaticResource BoolToVis}}"
+                                       Text="ℹ Unpaid balance added to customer receivable ledger" 
+                                       Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </WrapPanel>
+                </Border>
+
+                <!-- Row 2: Party Posting Badge, Grand Total & Actions -->
+                <DockPanel LastChildFill="False">
+                    <!-- Left: Party Account Posting Amount Highlight -->
+                    <WrapPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,0,10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📌 Party Account Posting: " Foreground="{DynamicResource SecondaryTextBrush}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding PartyAmount, Converter={StaticResource CurrencyConverter}}" FontWeight="Black" FontSize="14" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource StatBadge}" Padding="14,6" Margin="0,0,10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Grand Total (Net): " Foreground="{DynamicResource SecondaryTextBrush}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding GrandTotal, Converter={StaticResource CurrencyConverter}}" FontWeight="Black" FontSize="16" Foreground="{DynamicResource SuccessBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </WrapPanel>
+
+                    <!-- Right: Quick Actions -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,4">
+                        <Button Content="🖨 Print Invoice (F9 / Ctrl+P)" Style="{StaticResource SecondaryButton}" Command="{Binding PrintCommand}" Margin="0,0,8,0" />
+                        <Button x:Name="QuickSaveButton" Content="✓ Save Invoice (F8 / Ctrl+A)" Style="{StaticResource SuccessButton}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" />
+                    </StackPanel>
+                </DockPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

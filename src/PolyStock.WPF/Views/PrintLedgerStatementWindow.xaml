@@ -1,0 +1,174 @@
+<Window x:Class="PolyStock.WPF.Views.PrintLedgerStatementWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:PolyStock.WPF.Converters"
+        mc:Ignorable="d"
+        Title="Statement of Account Preview - PolyStock"
+        Height="780" Width="920"
+        WindowStartupLocation="CenterOwner"
+        Background="#525659">
+
+    <Window.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Top Print Toolbar -->
+        <Border Grid.Row="0" Background="#323639" Padding="16,10">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="🖨 Statement of Account Preview" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
+                    <Border Background="#2563EB" CornerRadius="4" Padding="8,3" Margin="12,0,0,0">
+                        <TextBlock Text="{Binding AccountName, StringFormat='{}Ledger: {0}'}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="11" />
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="🖨  Print Statement" Background="#2B7DE9" Foreground="#FFFFFF" FontWeight="Bold" Padding="16,8" Margin="0,0,10,0" Click="Print_Click" />
+                    <Button Content="Close" Background="#4F5356" Foreground="#FFFFFF" Padding="14,8" Click="Close_Click" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Printable Document Canvas -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <Border x:Name="PrintArea"
+                    Background="#FFFFFF"
+                    Width="840"
+                    MinHeight="600"
+                    Margin="20"
+                    Padding="36"
+                    BorderBrush="#CCCCCC"
+                    BorderThickness="1"
+                    CornerRadius="2">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="15" Opacity="0.3" ShadowDepth="4" Direction="270" Color="#000000" />
+                </Border.Effect>
+
+                <StackPanel>
+                    <!-- Header -->
+                    <DockPanel Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="POLYSTOCK POLYMERS &amp; COMMODITIES" FontSize="18" FontWeight="Black" Foreground="#111827" />
+                            <TextBlock Text="Complete Statement of Account / Ledger Extract" FontSize="11" Foreground="#4B5563" Margin="0,2,0,0" />
+                        </StackPanel>
+
+                        <Border Background="#F3F4F6" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12,6" HorizontalAlignment="Right" VerticalAlignment="Top" CornerRadius="4">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="STATEMENT OF ACCOUNT" FontSize="11" FontWeight="Black" Foreground="#1F2937" HorizontalAlignment="Center" />
+                                <TextBlock x:Name="TxtPeriod" Text="Period: All Transactions" FontSize="10" Foreground="#4B5563" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </DockPanel>
+
+                    <Separator Background="#111827" Height="2" Margin="0,0,0,14" />
+
+                    <!-- Party Info Card -->
+                    <Border Background="#F9FAFB" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.4*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{Binding AccountName}" FontSize="15" FontWeight="Black" Foreground="#111827" />
+                                <TextBlock Text="{Binding AccountType, StringFormat='Account Type: {0}'}" FontSize="11" FontWeight="Bold" Foreground="#2563EB" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding Address, TargetNullValue='No address specified'}" FontSize="11" Foreground="#4B5563" Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding GSTIN, StringFormat='GSTIN: {0}', TargetNullValue='GSTIN: -'}" FontSize="11" FontWeight="SemiBold" Foreground="#374151" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding Mobile, StringFormat='Phone: {0}', TargetNullValue='Phone: -'}" FontSize="11" Foreground="#4B5563" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                                <TextBlock x:Name="TxtGeneratedOn" Text="Generated: Today" FontSize="10" Foreground="#6B7280" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Statement Table -->
+                    <DataGrid x:Name="DgStatement"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              GridLinesVisibility="Horizontal"
+                              RowHeight="28"
+                              FontSize="11"
+                              BorderThickness="1"
+                              BorderBrush="#E5E7EB"
+                              Background="#FFFFFF"
+                              Margin="0,0,0,16">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat='{}{0:dd-MMM-yyyy}'}" Width="85" />
+                            <DataGridTextColumn Header="Type" Binding="{Binding TransactionType}" FontWeight="Bold" Width="70" />
+                            <DataGridTextColumn Header="Ref #" Binding="{Binding RefNo}" Width="100" />
+                            <DataGridTextColumn Header="Particulars" Binding="{Binding Particulars}" Width="*" />
+                            <DataGridTextColumn Header="+ In / Billed" Binding="{Binding FormattedDebit}" Width="105" />
+                            <DataGridTextColumn Header="- Out / Paid" Binding="{Binding FormattedCredit}" Width="105" />
+                            <DataGridTextColumn Header="Balance (+/-)" Binding="{Binding FormattedRunningBalance}" FontWeight="Bold" Width="115" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Summary KPI Box -->
+                    <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,24">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Opening -->
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="OPENING BALANCE" FontSize="9" FontWeight="Bold" Foreground="#1E40AF" />
+                                <TextBlock x:Name="TxtOpening" Text="₹ 0.00" FontSize="13" FontWeight="Bold" Foreground="#1E3A8A" Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <!-- Total Debits -->
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="+ TOTAL ADDED / IN" FontSize="9" FontWeight="Bold" Foreground="#1E40AF" />
+                                <TextBlock x:Name="TxtDebits" Text="₹ 0.00" FontSize="13" FontWeight="Bold" Foreground="#047857" Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <!-- Total Credits -->
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="- TOTAL PAID / OUT" FontSize="9" FontWeight="Bold" Foreground="#1E40AF" />
+                                <TextBlock x:Name="TxtCredits" Text="₹ 0.00" FontSize="13" FontWeight="Bold" Foreground="#B91C1C" Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <!-- Closing Balance -->
+                            <StackPanel Grid.Column="3" HorizontalAlignment="Right">
+                                <TextBlock Text="NET CLOSING BALANCE (+/-)" FontSize="9" FontWeight="Bold" Foreground="#1E40AF" HorizontalAlignment="Right" />
+                                <TextBlock x:Name="TxtClosing" Text="₹ 0.00" FontSize="15" FontWeight="Black" Foreground="#1E3A8A" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Signatures -->
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" HorizontalAlignment="Left">
+                            <Separator Width="180" Background="#9CA3AF" Height="1" HorizontalAlignment="Left" />
+                            <TextBlock Text="Customer / Vendor Confirmation" FontSize="10" FontWeight="SemiBold" Foreground="#4B5563" Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                            <Separator Width="180" Background="#9CA3AF" Height="1" HorizontalAlignment="Right" />
+                            <TextBlock Text="For POLYSTOCK (Authorized Signatory)" FontSize="10" FontWeight="SemiBold" Foreground="#4B5563" HorizontalAlignment="Right" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+    </Grid>
+</Window>

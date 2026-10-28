@@ -1,0 +1,638 @@
+<UserControl x:Class="PolyStock.WPF.Views.VoucherView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:PolyStock.WPF.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="880" d:DesignWidth="1320"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType"
+             FontFamily="Segoe UI, -apple-system, Roboto, sans-serif"
+              Loaded="UserControl_Loaded"
+              IsVisibleChanged="UserControl_IsVisibleChanged"
+              PreviewKeyDown="UserControl_PreviewKeyDown">
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding SetPaymentModeCommand}" />
+        <KeyBinding Key="F6" Command="{Binding SetReceiptModeCommand}" />
+        <KeyBinding Key="F7" Command="{Binding SetJournalModeCommand}" />
+        <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding SaveCommand}" />
+        <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding SaveCommand}" />
+        <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding NewCommand}" />
+        <KeyBinding Modifiers="Ctrl" Key="P" Command="{Binding PrintCommand}" />
+        <KeyBinding Modifiers="Ctrl" Key="D" Command="{Binding DeleteCommand}" />
+    </UserControl.InputBindings>
+
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter" />
+        <conv:WeightConverter x:Key="WeightConverter" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+
+        <!-- Modern Segmented Pill Style for Voucher Mode Selector -->
+        <Style x:Key="VoucherModePill" TargetType="RadioButton">
+            <Setter Property="Background" Value="#F1F5F9" />
+            <Setter Property="BorderBrush" Value="#CBD5E1" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#334155" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="pillBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="7"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="pillBorder" Property="Background" Value="#E2E8F0" />
+                                <Setter TargetName="pillBorder" Property="BorderBrush" Value="#94A3B8" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Receipt Active Pill (Green) -->
+        <Style x:Key="ReceiptModePill" TargetType="RadioButton" BasedOn="{StaticResource VoucherModePill}">
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="#059669" />
+                    <Setter Property="BorderBrush" Value="#047857" />
+                    <Setter Property="Foreground" Value="#FFFFFF" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Payment Active Pill (Red) -->
+        <Style x:Key="PaymentModePill" TargetType="RadioButton" BasedOn="{StaticResource VoucherModePill}">
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="#DC2626" />
+                    <Setter Property="BorderBrush" Value="#B91C1C" />
+                    <Setter Property="Foreground" Value="#FFFFFF" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Journal Active Pill (Blue) -->
+        <Style x:Key="JournalModePill" TargetType="RadioButton" BasedOn="{StaticResource VoucherModePill}">
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="#2563EB" />
+                    <Setter Property="BorderBrush" Value="#1D4ED8" />
+                    <Setter Property="Foreground" Value="#FFFFFF" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <!-- 0. Mode Selector & Action Toolbar -->
+            <RowDefinition Height="Auto" />
+            <!-- 1. Split Content: Form Entry (Left) + Vouchers History Ledger (Right) -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 0. TOP TOOLBAR: VOUCHER MODE SELECTOR & ACTION BUTTONS -->
+        <Border Grid.Row="0" Style="{StaticResource ModernCard}" Margin="0,0,0,14" Padding="16,12">
+            <DockPanel>
+                <!-- Left: Mode Switcher Pills (F6 Receipt, F5 Payment, F7 Journal) -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- F6 Receipt -->
+                    <RadioButton Content="🟢 F6 - Receipt (Receive)"
+                                 IsChecked="{Binding IsReceiptMode, Mode=OneWay}"
+                                 Command="{Binding SetReceiptModeCommand}"
+                                 Click="ModePill_Click"
+                                 Style="{StaticResource ReceiptModePill}" />
+
+                    <!-- F5 Payment -->
+                    <RadioButton Content="🔴 F5 - Payment (Pay)"
+                                 IsChecked="{Binding IsPaymentMode, Mode=OneWay}"
+                                 Command="{Binding SetPaymentModeCommand}"
+                                 Click="ModePill_Click"
+                                 Style="{StaticResource PaymentModePill}" />
+
+                    <!-- F7 Journal -->
+                    <RadioButton Content="🔵 F7 - Journal (Adjust)"
+                                 IsChecked="{Binding IsJournalMode, Mode=OneWay}"
+                                 Command="{Binding SetJournalModeCommand}"
+                                 Click="ModePill_Click"
+                                 Style="{StaticResource JournalModePill}" />
+                </StackPanel>
+
+                <!-- Right: Action Buttons -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="NewBtn"
+                            Content="+ New (Ctrl+N)"
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding NewCommand}"
+                            Click="NewBtn_Click"
+                            PreviewKeyDown="NewBtn_PreviewKeyDown"
+                            Padding="14,9"
+                            FontSize="13"
+                            Margin="0,0,10,0"
+                            ToolTip="Reset form for new voucher (Ctrl+N)" />
+                    <Button Content="🖨 Print (Ctrl+P)" Style="{StaticResource SecondaryButton}" Command="{Binding PrintCommand}" Padding="14,9" FontSize="13" Margin="0,0,10,0" ToolTip="Print voucher slip (Ctrl+P)" />
+                    <Button Content="🗑 Delete (Ctrl+D)" Style="{StaticResource DangerButton}" Command="{Binding DeleteCommand}" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisConverter}}" Padding="14,9" FontSize="13" Margin="0,0,10,0" ToolTip="Delete this voucher (Ctrl+D)" />
+                    <Button x:Name="SaveBtn" Content="✓ Save (Ctrl+A)" Style="{StaticResource SuccessButton}" Command="{Binding SaveCommand}" Padding="20,9" FontSize="13" ToolTip="Save voucher (Ctrl+A or Ctrl+S)" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- 1. SPLIT CONTENT: RESIZABLE FORM ENTRY (LEFT) + VOUCHERS LEDGER (RIGHT) -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- Left: Multi-Entry Particulars Form Entry Card (Flexible 1.5*) -->
+                <ColumnDefinition Width="1.5*" MinWidth="660" />
+                <!-- Center: Resizable Splitter -->
+                <ColumnDefinition Width="10" />
+                <!-- Right: Vouchers History & Filter Grid (1*) -->
+                <ColumnDefinition Width="1*" MinWidth="380" />
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT: TALLY SINGLE-ENTRY (MODE 1) CARD -->
+            <Border Grid.Column="0" Style="{StaticResource ModernCard}" Padding="20,16">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <!-- Form Header Title & Voucher No Badge -->
+                        <DockPanel Margin="0,0,0,14">
+                            <TextBlock Text="{Binding FormHeaderTitle}" FontSize="17" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                            <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="12,5" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding VoucherNo}" FontWeight="Bold" FontSize="12" Foreground="#1D4ED8" />
+                            </Border>
+                        </DockPanel>
+
+                        <Separator Background="{DynamicResource SeparatorBrush}" Height="1" Margin="0,0,0,14" />
+
+                        <!-- Meta Row: Voucher Date, Payment Mode, Ref / Cheque No -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Date *" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                                <DatePicker x:Name="VoucherDatePicker"
+                                            SelectedDate="{Binding VoucherDate}"
+                                            Height="38"
+                                            FontSize="13"
+                                            PreviewKeyDown="VoucherDatePicker_PreviewKeyDown" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Payment Mode" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                                <ComboBox x:Name="PaymentModeCombo"
+                                          ItemsSource="{Binding PaymentModes}"
+                                          SelectedItem="{Binding PaymentMode, Mode=TwoWay}"
+                                          Height="38"
+                                          FontSize="13"
+                                          PreviewKeyDown="PaymentModeCombo_PreviewKeyDown" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="Ref / Cheque / UTR #" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                                <TextBox x:Name="ReferenceNoBox"
+                                         Text="{Binding ReferenceNo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Height="38"
+                                         FontSize="13"
+                                         PreviewKeyDown="ReferenceNoBox_PreviewKeyDown" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- TALLY SINGLE-ENTRY PRIMARY ACCOUNT (Receipt & Payment) -->
+                        <StackPanel Visibility="{Binding IsSingleEntryMode, Converter={StaticResource BoolToVisConverter}}" Margin="0,0,0,14">
+                            <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1.5" CornerRadius="8" Padding="14,12">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <TextBlock Text="{Binding PrimaryAccountLabel}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center" />
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <TextBlock Text="Current: " FontSize="12" Foreground="#64748B" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding PrimaryCurrentBalanceText}" FontSize="12" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,12,0" VerticalAlignment="Center" />
+                                            <TextBlock Text="➔  Projected: " FontSize="12" Foreground="#64748B" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding PrimaryProjectedBalanceText}" FontSize="13" FontWeight="Black" Foreground="#059669" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DockPanel>
+
+                                    <ComboBox x:Name="CashBankCombo"
+                                              ItemsSource="{Binding CashBankAccounts}"
+                                              SelectedItem="{Binding SelectedCashBankAccount, Mode=TwoWay}"
+                                              DisplayMemberPath="AccountName"
+                                              IsEditable="True"
+                                              IsTextSearchEnabled="True"
+                                              IsTextSearchCaseSensitive="False"
+                                              Height="40"
+                                              FontSize="14"
+                                              FontWeight="SemiBold"
+                                              PreviewKeyDown="CashBankCombo_PreviewKeyDown" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- JOURNAL MODE (Direct Dr / Cr Accounts) -->
+                        <StackPanel Visibility="{Binding IsJournalMode, Converter={StaticResource BoolToVisConverter}}" Margin="0,0,0,14">
+                            <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1.5" CornerRadius="8" Padding="14,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="14" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Debit Account -->
+                                    <StackPanel Grid.Column="0">
+                                        <DockPanel Margin="0,0,0,6">
+                                            <TextBlock Text="Debit (By/Dr) Account *" FontSize="12" FontWeight="Bold" Foreground="#0F172A" />
+                                            <TextBlock Text="{Binding PrimaryCurrentBalanceText}" FontSize="11" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Right" />
+                                        </DockPanel>
+                                        <ComboBox x:Name="DrAccountCombo"
+                                                  ItemsSource="{Binding AllAccounts}"
+                                                  SelectedItem="{Binding SelectedDrAccount, Mode=TwoWay}"
+                                                  DisplayMemberPath="AccountName"
+                                                  IsEditable="True"
+                                                  IsTextSearchEnabled="True"
+                                                  IsTextSearchCaseSensitive="False"
+                                                  Height="38"
+                                                  FontSize="13"
+                                                  PreviewKeyDown="DrAccountCombo_PreviewKeyDown" />
+                                    </StackPanel>
+
+                                    <!-- Credit Account -->
+                                    <StackPanel Grid.Column="2">
+                                        <DockPanel Margin="0,0,0,6">
+                                            <TextBlock Text="Credit (To/Cr) Account *" FontSize="12" FontWeight="Bold" Foreground="#0F172A" />
+                                            <TextBlock Text="{Binding PartyCurrentBalanceText}" FontSize="11" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Right" />
+                                        </DockPanel>
+                                        <ComboBox x:Name="CrAccountCombo"
+                                                  ItemsSource="{Binding AllAccounts}"
+                                                  SelectedItem="{Binding SelectedCrAccount, Mode=TwoWay}"
+                                                  DisplayMemberPath="AccountName"
+                                                  IsEditable="True"
+                                                  IsTextSearchEnabled="True"
+                                                  IsTextSearchCaseSensitive="False"
+                                                  Height="38"
+                                                  FontSize="13"
+                                                  PreviewKeyDown="CrAccountCombo_PreviewKeyDown" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- PARTICULARS SECTION HEADER -->
+                        <DockPanel Margin="0,2,0,8">
+                            <TextBlock Text="{Binding ParticularsHeaderLabel}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center" />
+                            <TextBlock Text="✦ Keyboard: Enter moves next • Empty row Enter skips to Narration • Ctrl+A to Save • Ctrl+Del to delete row"
+                                       FontSize="11"
+                                       FontWeight="Medium"
+                                       Foreground="#0284C7"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+
+                        <!-- MULTI-LINE PARTICULARS DATAGRID -->
+                        <Border BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Margin="0,0,0,12">
+                            <DataGrid x:Name="ParticularsGrid"
+                                      ItemsSource="{Binding LineItems}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      RowHeight="44"
+                                      MinHeight="140"
+                                      MaxHeight="320"
+                                      GridLinesVisibility="Horizontal"
+                                      HeadersVisibility="Column"
+                                       HorizontalScrollBarVisibility="Auto"
+                                       VerticalScrollBarVisibility="Auto"
+                                       SelectionMode="Single"
+                                       SelectionUnit="FullRow"
+                                       VirtualizingStackPanel.IsVirtualizing="False"
+                                       KeyboardNavigation.TabNavigation="Cycle"
+                                       FontSize="13"
+                                       BorderThickness="0"
+                                       PreviewKeyDown="ParticularsGrid_PreviewKeyDown">
+
+                                <!-- Custom Cell Style to Eliminate Cell Stealing Focus and Selection Borders -->
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Focusable" Value="False" />
+                                        <Setter Property="IsTabStop" Value="False" />
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="SnapsToDevicePixels" Value="True" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="Transparent" />
+                                                <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+
+                                <!-- Custom Column Header Styling for Crystal Clarity -->
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#F1F5F9" />
+                                        <Setter Property="Foreground" Value="#1E293B" />
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                        <Setter Property="FontSize" Value="12" />
+                                        <Setter Property="Height" Value="38" />
+                                        <Setter Property="Padding" Value="10,6" />
+                                        <Setter Property="BorderBrush" Value="#CBD5E1" />
+                                        <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+
+                                <DataGrid.Columns>
+                                    <!-- Line # -->
+                                    <DataGridTextColumn Header="#" Binding="{Binding LineNumber}" Width="45" IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="Foreground" Value="#64748B" />
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                                <Setter Property="FontSize" Value="12" />
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Particulars Account ComboBox (Direct Interactive Control) -->
+                                    <DataGridTemplateColumn Header="Particulars / Account Name *" Width="2.4*" MinWidth="220">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox x:Name="LineAccountCombo"
+                                                          ItemsSource="{Binding DataContext.AllAccounts, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          SelectedItem="{Binding SelectedAccount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          DisplayMemberPath="AccountName"
+                                                          IsEditable="True"
+                                                          IsTextSearchEnabled="True"
+                                                          IsTextSearchCaseSensitive="False"
+                                                          FontSize="13"
+                                                          FontWeight="SemiBold"
+                                                          Height="32"
+                                                          VerticalAlignment="Center"
+                                                          Margin="4,2"
+                                                          PreviewKeyDown="LineAccountCombo_PreviewKeyDown"
+                                                          LostFocus="LineAccountCombo_LostFocus" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Current Balance -->
+                                    <DataGridTextColumn Header="Current Bal" Binding="{Binding CurrentBalanceText}" Width="1.3*" MinWidth="120" IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Right" />
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="FontSize" Value="12" />
+                                                <Setter Property="FontWeight" Value="Medium" />
+                                                <Setter Property="Foreground" Value="#475569" />
+                                                <Setter Property="Margin" Value="0,0,10,0" />
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Amount (₹) (Direct Interactive Control) -->
+                                    <DataGridTemplateColumn Header="Amount (₹) *" Width="1.3*" MinWidth="130">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox x:Name="LineAmountBox"
+                                                         Text="{Binding AmountText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         TextAlignment="Right"
+                                                         FontWeight="Bold"
+                                                         FontSize="13"
+                                                         Foreground="#0078D4"
+                                                         Height="32"
+                                                         Padding="6,2,12,2"
+                                                         VerticalContentAlignment="Center"
+                                                         VerticalAlignment="Center"
+                                                         Margin="4,2"
+                                                         PreviewKeyDown="LineAmountBox_PreviewKeyDown"
+                                                         GotFocus="LineTextControl_GotFocus"
+                                                         LostFocus="LineAmountBox_LostFocus"
+                                                         PreviewMouseLeftButtonDown="LineTextControl_PreviewMouseLeftButtonDown" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Ref / Bill # (Direct Interactive Control) -->
+                                    <DataGridTemplateColumn Header="Ref / Bill #" Width="1.1*" MinWidth="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox x:Name="LineRefBox"
+                                                         Text="{Binding ReferenceNo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         FontSize="12"
+                                                         Height="32"
+                                                         Padding="8,2,8,2"
+                                                         VerticalContentAlignment="Center"
+                                                         VerticalAlignment="Center"
+                                                         Margin="4,2"
+                                                         PreviewKeyDown="LineRefBox_PreviewKeyDown"
+                                                         GotFocus="LineTextControl_GotFocus"
+                                                         PreviewMouseLeftButtonDown="LineTextControl_PreviewMouseLeftButtonDown" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Line Remarks (Direct Interactive Control) -->
+                                    <DataGridTemplateColumn Header="Line Remarks" Width="1.6*" MinWidth="140">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox x:Name="LineRemarksBox"
+                                                         Text="{Binding Remarks, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         FontSize="12"
+                                                         Height="32"
+                                                         Padding="8,2,8,2"
+                                                         VerticalContentAlignment="Center"
+                                                         VerticalAlignment="Center"
+                                                         Margin="4,2"
+                                                         PreviewKeyDown="LineRemarksBox_PreviewKeyDown"
+                                                         GotFocus="LineTextControl_GotFocus"
+                                                         PreviewMouseLeftButtonDown="LineTextControl_PreviewMouseLeftButtonDown" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Delete Row Action -->
+                                    <DataGridTemplateColumn Header="" Width="44">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="✕"
+                                                        Command="{Binding DeleteCommand}"
+                                                        Focusable="False"
+                                                        ToolTip="Remove line item (Ctrl+Del)"
+                                                        Foreground="#DC2626"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        FontWeight="Black"
+                                                        FontSize="14"
+                                                        Cursor="Hand"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Padding="4" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+
+                        <!-- TOTAL VOUCHER AMOUNT & ADD BUTTON BAR -->
+                        <Border Background="#EFF6FF" BorderBrush="#93C5FD" BorderThickness="1.5" CornerRadius="8" Padding="16,12" Margin="0,0,0,14">
+                            <DockPanel>
+                                <Button Content="+ Add Line Item"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding AddLineItemCommand}"
+                                        Padding="14,8"
+                                        FontSize="13"
+                                        FontWeight="SemiBold"
+                                        VerticalAlignment="Center" />
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <TextBlock Text="TOTAL VOUCHER AMOUNT:" FontSize="11" FontWeight="Bold" Foreground="#1E40AF" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <TextBlock Text="{Binding FormattedTotalAmount}" FontSize="24" FontWeight="Black" Foreground="#1E3A8A" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Quick Reference Bills / Invoices Helper (if available) -->
+                        <StackPanel Margin="0,0,0,12" Visibility="{Binding RecentPartyInvoices.Count, Converter={StaticResource BoolToVisConverter}}">
+                            <TextBlock Text="Recent Bills for Selected Party (Reference):" FontSize="12" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,4" />
+                            <ItemsControl ItemsSource="{Binding RecentPartyInvoices}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource PanelBrush}" CornerRadius="4" Padding="8,4" Margin="0,2">
+                                            <TextBlock Text="{Binding}" FontSize="12" Foreground="#334155" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- Narration / Remarks -->
+                        <StackPanel Margin="0,0,0,8">
+                            <TextBlock Text="Narration / Remarks" Style="{StaticResource FormLabel}" Margin="0,0,0,4" />
+                            <TextBox x:Name="NarrationBox"
+                                     Text="{Binding Narration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="54"
+                                     FontSize="13"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     VerticalContentAlignment="Top"
+                                     ToolTip="Narration remarks. Press Enter to Save (Shift+Enter for newline)."
+                                     PreviewKeyDown="NarrationBox_PreviewKeyDown" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- CENTER: RESIZABLE GRID SPLITTER -->
+            <GridSplitter Grid.Column="1"
+                          Width="10"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="Transparent"
+                          Cursor="SizeWE" />
+
+            <!-- RIGHT: VOUCHERS HISTORY LEDGER & FILTER -->
+            <Border Grid.Column="2" Style="{StaticResource ModernCard}" Padding="18,16">
+                <DockPanel>
+                    <!-- Filter Bar -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Type Filter -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Voucher Filter" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding VoucherTypeFilters}"
+                                      SelectedItem="{Binding VoucherTypeFilter, Mode=TwoWay}"
+                                      Height="36"
+                                      FontSize="13" />
+                        </StackPanel>
+
+                        <!-- Search Party / Ref / No -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Search (Party / Account / Voucher # / Cheque #)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding SearchPartyText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="36"
+                                     FontSize="13" />
+                        </StackPanel>
+
+                        <!-- Count Badge -->
+                        <Border Grid.Column="4" Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="12,6" VerticalAlignment="Bottom" Height="36">
+                            <TextBlock Text="{Binding FilteredVouchers.Count, StringFormat='{}{0} Vouchers'}" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Vouchers Table -->
+                    <DataGrid ItemsSource="{Binding FilteredVouchers}"
+                              SelectedItem="{Binding SelectedVoucher, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowHeight="44"
+                              FontSize="13">
+                        <DataGrid.Columns>
+                            <!-- Type Badge -->
+                            <DataGridTemplateColumn Header="Type" Width="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="4" Padding="8,3" HorizontalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#059669" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding VoucherType}" Value="PAYMENT">
+                                                             <Setter Property="Background" Value="#DC2626" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding VoucherType}" Value="JOURNAL">
+                                                            <Setter Property="Background" Value="#2563EB" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding TypeBadgeText}" FontWeight="Bold" FontSize="11" Foreground="#FFFFFF" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="Voucher #" Binding="{Binding VoucherNo}" FontWeight="SemiBold" Width="130" />
+                            <DataGridTextColumn Header="Date" Binding="{Binding VoucherDate, StringFormat='{}{0:dd-MMM-yy}'}" Width="90" />
+                            <DataGridTextColumn Header="Account (Cash / Bank)" Binding="{Binding PrimaryAccountName}" Width="1.3*" />
+                            <DataGridTextColumn Header="Particulars / Summary" Binding="{Binding SummaryText}" Width="1.6*" />
+                            <DataGridTextColumn Header="Amount" Binding="{Binding Amount, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" Width="115" />
+                            <DataGridTextColumn Header="Mode" Binding="{Binding PaymentMode}" Width="90" />
+                            <DataGridTextColumn Header="Ref #" Binding="{Binding ReferenceNo}" Width="90" />
+                            <DataGridTextColumn Header="Narration" Binding="{Binding Narration}" Width="1.2*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

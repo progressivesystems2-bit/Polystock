@@ -1,0 +1,124 @@
+<UserControl x:Class="PolyStock.WPF.Views.InvoiceHistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:PolyStock.WPF.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1100"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType"
+             TextOptions.TextHintingMode="Fixed">
+
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter" />
+        <conv:WeightConverter x:Key="WeightConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="1.2*" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Top Filter & Toggle Bar -->
+        <Border Grid.Row="0" Style="{StaticResource ModernCard}" Margin="0,0,0,16">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <RadioButton Content="Sales Invoices Register" Style="{StaticResource NavButton}" IsChecked="{Binding IsSalesSelected}" Margin="0,0,8,0" />
+                    <RadioButton Content="Purchase Invoices Register" Style="{StaticResource NavButton}" IsChecked="{Binding IsPurchasesSelected}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,8,0" />
+                    <Button Content="Refresh" Style="{StaticResource SecondaryButton}" Command="{Binding RefreshCommand}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Master Invoices Grid -->
+        <Border Grid.Row="1" Style="{StaticResource ModernCard}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Invoice Master Records (Click an invoice to view line items)" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,12" />
+
+                <!-- Sales Grid -->
+                <DataGrid ItemsSource="{Binding FilteredSales}" SelectedItem="{Binding SelectedSale, Mode=TwoWay, TargetNullValue={x:Null}, FallbackValue={x:Null}}"
+                          Visibility="{Binding IsSalesSelected, Converter={StaticResource BoolToVis}}"
+                          AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Invoice #" Binding="{Binding InvoiceNo}" Width="130" />
+                        <DataGridTextColumn Header="Customer Name" Binding="{Binding CustomerName}" Width="1.5*" />
+                        <DataGridTextColumn Header="Sale Date" Binding="{Binding SaleDate, StringFormat='{}{0:dd-MMM-yyyy}'}" Width="95" />
+                        <DataGridTextColumn Header="Bags" Binding="{Binding TotalBags}" Width="60" />
+                        <DataGridTextColumn Header="Weight" Binding="{Binding TotalWeightKg, Converter={StaticResource WeightConverter}}" Width="90" />
+                        <DataGridTextColumn Header="SubTotal" Binding="{Binding SubTotal, Converter={StaticResource CurrencyConverter}}" Width="95" />
+                        <DataGridTextColumn Header="GST" Binding="{Binding GstAmount, Converter={StaticResource CurrencyConverter}}" Width="85" />
+                        <DataGridTextColumn Header="Freight" Binding="{Binding Freight, Converter={StaticResource CurrencyConverter}}" Width="80" />
+                        <DataGridTextColumn Header="Loading" Binding="{Binding LoadingUnloading, Converter={StaticResource CurrencyConverter}}" Width="80" />
+                        <DataGridTextColumn Header="Party (Bill+GST)" Binding="{Binding PartyAmount, Converter={StaticResource CurrencyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="Grand Total" Binding="{Binding GrandTotal, Converter={StaticResource CurrencyConverter}}" Width="110" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Purchases Grid -->
+                <DataGrid ItemsSource="{Binding FilteredPurchases}" SelectedItem="{Binding SelectedPurchase, Mode=TwoWay, TargetNullValue={x:Null}, FallbackValue={x:Null}}"
+                          Visibility="{Binding IsPurchasesSelected, Converter={StaticResource BoolToVis}}"
+                          AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Invoice #" Binding="{Binding InvoiceNo}" Width="130" />
+                        <DataGridTextColumn Header="Supplier Name" Binding="{Binding SupplierName}" Width="1.5*" />
+                        <DataGridTextColumn Header="Purchase Date" Binding="{Binding PurchaseDate, StringFormat='{}{0:dd-MMM-yyyy}'}" Width="95" />
+                        <DataGridTextColumn Header="Bags" Binding="{Binding TotalBags}" Width="60" />
+                        <DataGridTextColumn Header="Weight" Binding="{Binding TotalWeightKg, Converter={StaticResource WeightConverter}}" Width="90" />
+                        <DataGridTextColumn Header="SubTotal" Binding="{Binding SubTotal, Converter={StaticResource CurrencyConverter}}" Width="95" />
+                        <DataGridTextColumn Header="GST" Binding="{Binding GstAmount, Converter={StaticResource CurrencyConverter}}" Width="85" />
+                        <DataGridTextColumn Header="Freight" Binding="{Binding Freight, Converter={StaticResource CurrencyConverter}}" Width="80" />
+                        <DataGridTextColumn Header="Loading" Binding="{Binding LoadingUnloading, Converter={StaticResource CurrencyConverter}}" Width="80" />
+                        <DataGridTextColumn Header="Supplier (Bill+GST)" Binding="{Binding PartyAmount, Converter={StaticResource CurrencyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="Grand Total" Binding="{Binding GrandTotal, Converter={StaticResource CurrencyConverter}}" Width="110" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+
+        <!-- Detail Line Items Grid -->
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Invoice Item Details" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,10" />
+
+                <!-- Sales Details -->
+                <DataGrid ItemsSource="{Binding SelectedSale.Items}"
+                          Visibility="{Binding IsSalesSelected, Converter={StaticResource BoolToVis}}"
+                          AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Item Name" Binding="{Binding ItemName}" Width="2*" />
+                        <DataGridTextColumn Header="Pack Size" Binding="{Binding PackSizeKg, StringFormat='{}{0} kg'}" Width="100" />
+                        <DataGridTextColumn Header="Bags Sold" Binding="{Binding BagsSold}" Width="90" />
+                        <DataGridTextColumn Header="Loose Sold (kg)" Binding="{Binding LooseKgSold, StringFormat='{}{0:F2}'}" Width="110" />
+                        <DataGridTextColumn Header="Total Weight" Binding="{Binding TotalKgSold, Converter={StaticResource WeightConverter}}" Width="120" />
+                        <DataGridTextColumn Header="Rate / kg" Binding="{Binding RatePerKg, Converter={StaticResource CurrencyConverter}}" Width="100" />
+                        <DataGridTextColumn Header="Amount" Binding="{Binding Amount, Converter={StaticResource CurrencyConverter}}" Width="120" />
+                        <DataGridTextColumn Header="Bags Cut/Opened" Binding="{Binding BagsOpened, StringFormat='{}{0} Bag(s)'}" Width="120" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Purchase Details -->
+                <DataGrid ItemsSource="{Binding SelectedPurchase.Items}"
+                          Visibility="{Binding IsPurchasesSelected, Converter={StaticResource BoolToVis}}"
+                          AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Item Name" Binding="{Binding ItemName}" Width="2*" />
+                        <DataGridTextColumn Header="Pack Size" Binding="{Binding PackSizeKg, StringFormat='{}{0} kg'}" Width="100" />
+                        <DataGridTextColumn Header="Bags Inward" Binding="{Binding Bags}" Width="110" />
+                        <DataGridTextColumn Header="Total Weight" Binding="{Binding TotalKg, Converter={StaticResource WeightConverter}}" Width="130" />
+                        <DataGridTextColumn Header="Rate / kg" Binding="{Binding RatePerKg, Converter={StaticResource CurrencyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="Amount" Binding="{Binding Amount, Converter={StaticResource CurrencyConverter}}" Width="130" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

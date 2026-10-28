@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PolyStock.Core/PolyStock.Core.csproj" />
+    <Project Path="src/PolyStock.Data/PolyStock.Data.csproj" />
+    <Project Path="src/PolyStock.Services/PolyStock.Services.csproj" />
+    <Project Path="src/PolyStock.WPF/PolyStock.WPF.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PolyStock.Tests/PolyStock.Tests.csproj" />
+  </Folder>
+</Solution>

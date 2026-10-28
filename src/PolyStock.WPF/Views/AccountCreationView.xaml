@@ -1,0 +1,169 @@
+<UserControl x:Class="PolyStock.WPF.Views.AccountCreationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:PolyStock.WPF.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1100"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType"
+             TextOptions.TextHintingMode="Fixed">
+
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter" />
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="420" />
+            <ColumnDefinition Width="24" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Form Entry -->
+        <Border Grid.Column="0" Style="{StaticResource ModernCard}" VerticalAlignment="Top">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Party / Account Setup" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,16" />
+
+                    <!-- Account Type & Name -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="130" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Account Type *" Style="{StaticResource FormLabel}" />
+                            <ComboBox ItemsSource="{Binding AccountTypes}" SelectedItem="{Binding AccountType}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Account / Party Name *" Style="{StaticResource FormLabel}" />
+                            <TextBox Text="{Binding AccountName, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Mobile & GSTIN -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Mobile / Phone" Style="{StaticResource FormLabel}" />
+                            <TextBox Text="{Binding Mobile, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="GSTIN / Tax ID" Style="{StaticResource FormLabel}" />
+                            <TextBox Text="{Binding GSTIN, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Address -->
+                    <TextBlock Text="Billing / Shipping Address" Style="{StaticResource FormLabel}" />
+                    <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Height="55" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Margin="0,0,0,12" />
+
+                    <!-- Opening Balance with +/- Type -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="140" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Opening Balance Amount -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Opening Balance (₹)" Style="{StaticResource FormLabel}" />
+                            <TextBox Text="{Binding OpeningBalanceText, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" FontWeight="Bold" />
+                        </StackPanel>
+
+                        <!-- Balance Type (+ / -) -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Balance Type (+/-)" Style="{StaticResource FormLabel}" />
+                            <ComboBox ItemsSource="{Binding OpeningBalanceTypes}" SelectedItem="{Binding OpeningBalanceType}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Description / Notes -->
+                    <TextBlock Text="Notes / Remarks" Style="{StaticResource FormLabel}" />
+                    <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" Height="50" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Margin="0,0,0,20" />
+
+                    <!-- Action Buttons -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="New" Style="{StaticResource SecondaryButton}" Command="{Binding NewCommand}" Margin="0,0,8,0" />
+                        <Button Content="Delete" Style="{StaticResource DangerButton}" Command="{Binding DeleteCommand}" Margin="0,0,8,0" />
+                        <Button Content="Save Account" Command="{Binding SaveCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Right: Accounts Directory & Ledger History -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1.2*" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Top: Accounts Directory Grid -->
+            <Border Grid.Row="0" Style="{StaticResource ModernCard}">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <TextBlock Text="Accounts &amp; Parties Directory" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="240" HorizontalAlignment="Right" />
+                    </DockPanel>
+
+                    <DataGrid ItemsSource="{Binding FilteredAccounts}" SelectedItem="{Binding SelectedAccount, Mode=TwoWay, TargetNullValue={x:Null}, FallbackValue={x:Null}}" AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Type" Binding="{Binding AccountType}" Width="90" />
+                            <DataGridTextColumn Header="Account Name" Binding="{Binding AccountName}" Width="1.8*" />
+                            <DataGridTextColumn Header="Mobile" Binding="{Binding Mobile}" Width="110" />
+                            <DataGridTextColumn Header="GSTIN" Binding="{Binding GSTIN}" Width="120" />
+                            <DataGridTextColumn Header="Opening Bal" Binding="{Binding FormattedOpeningBalance}" Width="110" />
+                            <!-- Current Balance with highlight -->
+                            <DataGridTemplateColumn Header="Current Balance" Width="130">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FormattedCurrentBalance}" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="6,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+
+            <!-- Bottom: Party Transaction / Account Ledger History -->
+            <Border Grid.Row="2" Style="{StaticResource ModernCard}">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Account Ledger / Transaction History" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,10,0" />
+                            <Border Background="{DynamicResource PanelBrush}" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding SelectedAccount.AccountName, StringFormat='Party: {0}', FallbackValue='Select an account above'}" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AccentBrush}" />
+                            </Border>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <DataGrid ItemsSource="{Binding AccountLedgerEntries}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="32">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Date" Binding="{Binding Timestamp, StringFormat='{}{0:dd-MMM-yyyy}'}" Width="100" />
+                            <DataGridTextColumn Header="Type" Binding="{Binding TransactionType}" Width="100" />
+                            <DataGridTextColumn Header="Invoice #" Binding="{Binding RefInvoiceNo}" Width="130" />
+                            <DataGridTextColumn Header="+ In / Billed (₹)" Binding="{Binding Debit, Converter={StaticResource CurrencyConverter}}" Width="115" />
+                            <DataGridTextColumn Header="- Out / Paid (₹)" Binding="{Binding Credit, Converter={StaticResource CurrencyConverter}}" Width="115" />
+                            <DataGridTextColumn Header="Remarks / Description" Binding="{Binding Remarks}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

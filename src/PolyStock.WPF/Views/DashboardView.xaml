@@ -1,0 +1,243 @@
+<UserControl x:Class="PolyStock.WPF.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:PolyStock.WPF.Converters"
+             mc:Ignorable="d" 
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType"
+             TextOptions.TextHintingMode="Fixed"
+             d:DesignHeight="780" d:DesignWidth="1200">
+
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter" />
+        <conv:WeightConverter x:Key="WeightConverter" />
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <!-- 0. Top KPI Summary & Refresh -->
+            <RowDefinition Height="Auto" />
+            <!-- 1. Big Quick Action Buttons Strip -->
+            <RowDefinition Height="Auto" />
+            <!-- 2. Split Workspace: Quick Stock Lookup (Left) + Recent Bills (Right) -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 0. TOP KPI SUMMARY -->
+        <Border Grid.Row="0" Style="{StaticResource ModernCard}" Margin="0,0,0,14" Padding="14,10">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Style="{StaticResource StatBadge}" Margin="0,0,12,0" Padding="14,6">
+                        <StackPanel>
+                            <TextBlock Text="TOTAL INVENTORY" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding TotalStockKg, Converter={StaticResource WeightConverter}}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StatBadge}" Margin="0,0,12,0" Padding="14,6">
+                        <StackPanel>
+                            <TextBlock Text="TOTAL AVAILABLE BAGS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding TotalFullBags, StringFormat='{}{0} Bags'}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StatBadge}" Margin="0,0,12,0" Padding="14,6">
+                        <StackPanel>
+                            <TextBlock Text="STOCK VALUATION" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding TotalInventoryValuation, Converter={StaticResource CurrencyConverter}}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StatBadge}" Padding="14,6">
+                        <StackPanel>
+                            <TextBlock Text="TOTAL MASTER ITEMS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding TotalItemsCount, StringFormat='{}{0} Products'}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="🔄 Refresh Data" Style="{StaticResource SecondaryButton}" Command="{Binding RefreshCommand}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- 1. QUICK ACTION SHORTCUT BUTTONS -->
+        <Border Grid.Row="1" Style="{StaticResource ModernCard}" Margin="0,0,0,14" Padding="12,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <!-- Sales -->
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <!-- Purchase -->
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <!-- Vouchers -->
+                    <ColumnDefinition Width="1.1*" />
+                    <ColumnDefinition Width="8" />
+                    <!-- Stock Register -->
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <!-- Invoices History -->
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <!-- Item Master -->
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <!-- Accounts -->
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- 🛒 New Sales Bill -->
+                <Button Grid.Column="0" Command="{Binding NavigateSalesCommand}" Style="{StaticResource AccentButton}" Height="46" Padding="6">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="🛒 " FontSize="15" />
+                        <TextBlock Text="Sales Bill" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- 📥 Purchase Inward -->
+                <Button Grid.Column="2" Command="{Binding NavigatePurchaseCommand}" Style="{StaticResource SuccessButton}" Height="46" Padding="6">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="📥 " FontSize="15" />
+                        <TextBlock Text="Purchase Inward" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- 💰 Vouchers (F5/F6/F7) -->
+                <Button Grid.Column="4" Command="{Binding NavigateVouchersCommand}" Style="{StaticResource SecondaryButton}" Height="46" Padding="6">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="💰 " FontSize="15" />
+                        <TextBlock Text="Vouchers (F5/F6/F7)" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- 📦 Stock Register -->
+                <Button Grid.Column="6" Command="{Binding NavigateStockRegisterCommand}" Style="{StaticResource SecondaryButton}" Height="46" Padding="6">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="📦 " FontSize="15" />
+                        <TextBlock Text="Stock Register" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- 📋 Invoices & History -->
+                <Button Grid.Column="8" Command="{Binding NavigateInvoicesCommand}" Style="{StaticResource SecondaryButton}" Height="46" Padding="6">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="📋 " FontSize="15" />
+                        <TextBlock Text="Invoices" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- 🏷 Item Master -->
+                <Button Grid.Column="10" Command="{Binding NavigateItemsCommand}" Style="{StaticResource SecondaryButton}" Height="46" Padding="6">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="🏷 " FontSize="15" />
+                        <TextBlock Text="Item Master" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- 👥 Party Accounts -->
+                <Button Grid.Column="12" Command="{Binding NavigateAccountsCommand}" Style="{StaticResource SecondaryButton}" Height="46" Padding="6">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="👥 " FontSize="15" />
+                        <TextBlock Text="Party Accounts" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- 2. SPLIT WORKSPACE: QUICK STOCK LOOKUP (LEFT) + RECENT BILLS (RIGHT) -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <!-- Left: Quick Stock Lookup Across Godowns -->
+                <ColumnDefinition Width="1.2*" />
+                <ColumnDefinition Width="14" />
+                <!-- Right: Recent Bills List -->
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT: QUICK STOCK LOOKUP ACROSS GODOWNS -->
+            <Border Grid.Column="0" Style="{StaticResource ModernCard}">
+                <DockPanel>
+                    <!-- Search Header -->
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🔍 Quick Stock Lookup" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Text="(Live Across Godowns)" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="6,0,0,0" />
+                        </StackPanel>
+
+                        <TextBox Text="{Binding SearchItemText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="240"
+                                 Height="32"
+                                 HorizontalAlignment="Right"
+                                 ToolTip="Type item name, keyword (e.g. 8x10, Balaji), or godown name to search live stock" />
+                    </DockPanel>
+
+                    <!-- Stock Results Grid -->
+                    <DataGrid ItemsSource="{Binding QuickStockList}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowHeight="36">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Item Name" Binding="{Binding ItemName}" Width="2.2*" />
+                            <DataGridTextColumn Header="Godown" Binding="{Binding GodownName, TargetNullValue='(Default)'}" Width="*" />
+                            <DataGridTextColumn Header="Bag Wt" Binding="{Binding PackSizeKg, StringFormat='{}{0:0.##} kg'}" Width="80" />
+                            <DataGridTextColumn Header="Bags" Binding="{Binding FullBags, StringFormat='{}{0} Bags'}" Width="85" />
+                            <DataGridTextColumn Header="Total Weight" Binding="{Binding TotalKg, Converter={StaticResource WeightConverter}}" Width="110" />
+                            <DataGridTextColumn Header="Valuation" Binding="{Binding Valuation, Converter={StaticResource CurrencyConverter}}" Width="105" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+
+            <!-- RIGHT: RECENT BILLS LIST -->
+            <Border Grid.Column="2" Style="{StaticResource ModernCard}">
+                <DockPanel>
+                    <!-- Header -->
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <TextBlock Text="📋 Recent Invoices &amp; Bills" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text="Click any bill to open &amp; edit" FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                    </DockPanel>
+
+                    <!-- Recent Bills DataGrid -->
+                    <DataGrid ItemsSource="{Binding RecentBills}"
+                              SelectedItem="{Binding SelectedRecentBill, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowHeight="38">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Type" Width="105">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#2563EB" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSale}" Value="False">
+                                                            <Setter Property="Background" Value="#059669" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding TypeDisplay}" FontWeight="Bold" FontSize="11" Foreground="#FFFFFF" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="Bill #" Binding="{Binding InvoiceNo}" FontWeight="SemiBold" Width="120" />
+                            <DataGridTextColumn Header="Party Name" Binding="{Binding PartyName}" Width="1.5*" />
+                            <DataGridTextColumn Header="Godown" Binding="{Binding GodownName}" Width="*" />
+                            <DataGridTextColumn Header="Bags" Binding="{Binding TotalBags, StringFormat='{}{0} Bags'}" Width="80" />
+                            <DataGridTextColumn Header="Total Weight" Binding="{Binding TotalWeightKg, Converter={StaticResource WeightConverter}}" Width="105" />
+                            <DataGridTextColumn Header="Grand Total" Binding="{Binding GrandTotal, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" Width="115" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

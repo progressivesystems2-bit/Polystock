@@ -1,0 +1,319 @@
+<UserControl x:Class="PolyStock.WPF.Views.UserSecurityView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" 
+             d:DesignHeight="780" d:DesignWidth="1200">
+
+    <Grid Margin="20">
+        <TabControl Background="Transparent" BorderThickness="0">
+            <!-- TAB 1: USERS DIRECTORY & MANAGEMENT -->
+            <TabItem Header="👥 User Accounts &amp; Logins" FontSize="14" FontWeight="SemiBold" Padding="16,8">
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="460" />
+                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left Column: User Account Form -->
+                    <Border Grid.Column="0" Style="{StaticResource ModernCard}" VerticalAlignment="Top">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="{Binding UserFormTitle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,14" />
+
+                                <!-- Status / Error Notification Banner -->
+                                <Border Background="{DynamicResource PanelBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="10,8"
+                                        Margin="0,0,0,14">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding StatusMessage}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding StatusMessage}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsErrorMessage}" Value="True">
+                                                    <Setter Property="Background" Value="#FEE2E2" />
+                                                    <Setter Property="BorderBrush" Value="#EF4444" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsErrorMessage}" Value="False">
+                                                    <Setter Property="Background" Value="#ECFDF5" />
+                                                    <Setter Property="BorderBrush" Value="#10B981" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding StatusMessage}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsErrorMessage}" Value="True">
+                                                        <Setter Property="Foreground" Value="#B91C1C" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsErrorMessage}" Value="False">
+                                                        <Setter Property="Foreground" Value="#047857" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+
+                                <!-- Username -->
+                                <TextBlock Text="Username *" Style="{StaticResource FormLabel}" />
+                                <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                                         IsReadOnly="{Binding IsExistingUser}"
+                                         Margin="0,0,0,12" />
+
+                                <!-- Full Name / Display Name -->
+                                <TextBlock Text="Full Name / Display Name *" Style="{StaticResource FormLabel}" />
+                                <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,0,12" />
+
+                                <!-- Security Role Assignment -->
+                                <TextBlock Text="Assigned Security Role *" Style="{StaticResource FormLabel}" />
+                                <ComboBox ItemsSource="{Binding Roles}"
+                                          SelectedValuePath="Id"
+                                          DisplayMemberPath="RoleName"
+                                          SelectedValue="{Binding SelectedUserRoleId}"
+                                          Height="32"
+                                          Margin="0,0,0,12" />
+
+                                <!-- Passwords -->
+                                <TextBlock Text="Password" Style="{StaticResource FormLabel}" />
+                                <TextBox Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,0,6" />
+                                <TextBlock Text="Leave empty to keep existing password when editing."
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           Margin="0,0,0,10" />
+
+                                <TextBlock Text="Confirm Password" Style="{StaticResource FormLabel}" />
+                                <TextBox Text="{Binding ConfirmPassword, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,0,14" />
+
+                                <!-- Active Checkbox -->
+                                <CheckBox Content="Account is Active (Allowed Login)"
+                                          IsChecked="{Binding IsActive}"
+                                          FontWeight="SemiBold"
+                                          Foreground="{DynamicResource PrimaryTextBrush}"
+                                          Margin="0,0,0,18" />
+
+                                <!-- Action Buttons -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="➕ New User"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Command="{Binding NewUserCommand}"
+                                            Margin="0,0,8,0" />
+                                    <Button Content="🗑 Delete"
+                                            Style="{StaticResource DangerButton}"
+                                            Command="{Binding DeleteUserCommand}"
+                                            Margin="0,0,8,0" />
+                                    <Button Content="💾 Save User"
+                                            Command="{Binding SaveUserCommand}"
+                                            Padding="16,6"
+                                            FontWeight="Bold" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <!-- Right Column: Users List -->
+                    <Border Grid.Column="2" Style="{StaticResource ModernCard}">
+                        <DockPanel>
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="System Users Directory" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                                    <Border Background="{DynamicResource AccentBrush}" CornerRadius="10" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding FilteredUsers.Count, StringFormat='{}{0} Users'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource AccentTextBrush}" />
+                                    </Border>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock Text="🔍 Filter:" Style="{StaticResource FormLabel}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="200" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DockPanel>
+
+                            <DataGrid ItemsSource="{Binding FilteredUsers}"
+                                      SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="120" FontWeight="Bold" />
+                                    <DataGridTextColumn Header="Display Name" Binding="{Binding DisplayName}" Width="1.5*" />
+                                    <DataGridTextColumn Header="Assigned Role" Binding="{Binding RoleName}" Width="1.2*" />
+                                    <DataGridTextColumn Header="Status" Binding="{Binding StatusDisplay}" Width="85" />
+                                    <DataGridTextColumn Header="Last Login" Binding="{Binding LastLoginAt, StringFormat='{}{0:dd-MMM-yyyy HH:mm}', TargetNullValue='Never'}" Width="140" />
+                                    <DataGridTextColumn Header="Created" Binding="{Binding CreatedAt, StringFormat='{}{0:dd-MMM-yyyy}'}" Width="105" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 2: ROLES & PERMISSION MATRIX -->
+            <TabItem Header="🔐 Role Permissions Matrix (Masters, Entries &amp; Reports)" FontSize="14" FontWeight="SemiBold" Padding="16,8">
+                <Grid Margin="0,16,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Top Controls / Toolbar -->
+                    <Border Grid.Row="0" Style="{StaticResource ModernCard}" Margin="0,0,0,14" Padding="14,12">
+                        <DockPanel LastChildFill="True">
+                            <!-- Left: Role Selection & Info -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
+                                <TextBlock Text="Select Role to Configure:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{DynamicResource PrimaryTextBrush}" />
+                                <ComboBox ItemsSource="{Binding Roles}"
+                                          SelectedItem="{Binding SelectedRole, Mode=TwoWay}"
+                                          DisplayMemberPath="RoleName"
+                                          Width="220"
+                                          Height="32"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,12,0" />
+
+                                <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,14,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding SelectedRole.Description, TargetNullValue='No description'}"
+                                               FontSize="11.5"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
+                                               VerticalAlignment="Center" />
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Right: Bulk Actions & Save -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Button Content="✓ Allow All"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding SelectAllPermissionsCommand}"
+                                        Margin="0,0,8,0"
+                                        Padding="10,4"
+                                        ToolTip="Check all View, Create, Edit, Delete, and Print permissions for this role" />
+
+                                <Button Content="✕ Clear All"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding ClearAllPermissionsCommand}"
+                                        Margin="0,0,8,0"
+                                        Padding="10,4"
+                                        ToolTip="Uncheck all permissions for this role" />
+
+                                <Button Content="↺ Reset to Defaults"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding ResetRoleToDefaultsCommand}"
+                                        Margin="0,0,14,0"
+                                        Padding="10,4"
+                                        ToolTip="Reset permissions to standard recommended settings for this role" />
+
+                                <Button Content="💾 Save Permissions"
+                                        Command="{Binding SavePermissionsCommand}"
+                                        Padding="18,6"
+                                        FontWeight="Bold" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Main Permission Matrix Grid -->
+                    <Border Grid.Row="1" Style="{StaticResource ModernCard}">
+                        <DockPanel>
+                            <!-- Mini panel to add custom roles -->
+                            <Border DockPanel.Dock="Bottom" Background="{DynamicResource PanelBrush}" CornerRadius="8" Padding="14,10" Margin="0,14,0,0">
+                                <DockPanel LastChildFill="True">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
+                                        <TextBlock Text="➕ Create New Custom Role:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="{DynamicResource PrimaryTextBrush}" />
+                                        <TextBox Text="{Binding NewRoleName, UpdateSourceTrigger=PropertyChanged}" Width="160" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                        <TextBox Text="{Binding NewRoleDescription, UpdateSourceTrigger=PropertyChanged}" Width="250" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                        <Button Content="Add Role" Command="{Binding AddRoleCommand}" Padding="12,4" VerticalAlignment="Center" />
+                                    </StackPanel>
+
+                                    <Button DockPanel.Dock="Right"
+                                            Content="🗑 Delete Selected Role"
+                                            Style="{StaticResource DangerButton}"
+                                            Command="{Binding DeleteRoleCommand}"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center" />
+                                </DockPanel>
+                            </Border>
+
+                            <!-- Permissions DataGrid -->
+                            <DataGrid ItemsSource="{Binding RolePermissions}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal"
+                                      RowHeight="36">
+                                <DataGrid.Columns>
+                                    <!-- Category Badge -->
+                                    <DataGridTextColumn Header="Category"
+                                                        Binding="{Binding Category}"
+                                                        Width="180"
+                                                        IsReadOnly="True"
+                                                        FontWeight="SemiBold" />
+
+                                    <!-- Module Name -->
+                                    <DataGridTemplateColumn Header="Feature / Module" Width="260" IsReadOnly="True">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
+                                                    <TextBlock Text="{Binding Icon}" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding ModuleName}" FontWeight="Bold" FontSize="12.5" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Description -->
+                                    <DataGridTextColumn Header="Description &amp; Purpose"
+                                                        Binding="{Binding Description}"
+                                                        Width="2*"
+                                                        IsReadOnly="True"
+                                                        Foreground="{DynamicResource SecondaryTextBrush}" />
+
+                                    <!-- Can View (Access) -->
+                                    <DataGridCheckBoxColumn Header="Can View (Open)"
+                                                            Binding="{Binding CanView, UpdateSourceTrigger=PropertyChanged}"
+                                                            Width="110" />
+
+                                    <!-- Can Create -->
+                                    <DataGridCheckBoxColumn Header="Can Create (New)"
+                                                            Binding="{Binding CanCreate, UpdateSourceTrigger=PropertyChanged}"
+                                                            Width="115" />
+
+                                    <!-- Can Edit -->
+                                    <DataGridCheckBoxColumn Header="Can Edit (Save)"
+                                                            Binding="{Binding CanEdit, UpdateSourceTrigger=PropertyChanged}"
+                                                            Width="110" />
+
+                                    <!-- Can Delete -->
+                                    <DataGridCheckBoxColumn Header="Can Delete"
+                                                            Binding="{Binding CanDelete, UpdateSourceTrigger=PropertyChanged}"
+                                                            Width="100" />
+
+                                    <!-- Can Print -->
+                                    <DataGridCheckBoxColumn Header="Can Print / Export"
+                                                            Binding="{Binding CanPrint, UpdateSourceTrigger=PropertyChanged}"
+                                                            Width="125" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

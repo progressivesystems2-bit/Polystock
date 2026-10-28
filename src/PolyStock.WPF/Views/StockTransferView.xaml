@@ -1,0 +1,459 @@
+<UserControl x:Class="PolyStock.WPF.Views.StockTransferView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:viewmodels="clr-namespace:PolyStock.WPF.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=viewmodels:StockTransferViewModel}"
+             d:DesignHeight="750" d:DesignWidth="1100"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType"
+             TextOptions.TextHintingMode="Fixed"
+             RenderOptions.ClearTypeHint="Enabled"
+             SnapsToDevicePixels="True"
+             UseLayoutRounding="True">
+
+    <Grid Background="Transparent">
+        <Grid.RowDefinitions>
+            <!-- 0: Top Action Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1: Godown Transfer Route & Master Info Card -->
+            <RowDefinition Height="Auto"/>
+            <!-- 2: Items DataGrid Canvas & History Split -->
+            <RowDefinition Height="*"/>
+            <!-- 3: Bottom Summary Bar -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 0. TOP ACTION BAR -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBackgroundBrush}"
+                BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16,10"
+                Margin="0,0,0,10">
+            <DockPanel LastChildFill="True">
+                <!-- Left: Title & Route Badge -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <TextBlock Text="🚚" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Stock Transfer" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}"/>
+                            <Border Background="{DynamicResource PanelBrush}" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TransferNo}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="{Binding GodownRouteDisplay}" FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Right: Action Buttons -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Command="{Binding NewTransferCommand}"
+                            Content="+ New Transfer (Ctrl+N)"
+                            Style="{DynamicResource SecondaryButton}"
+                            Height="32" Padding="12,0" Margin="0,0,8,0"/>
+
+                    <Button Command="{Binding PrintTransferCommand}"
+                            Content="🖨 Print Challan (Ctrl+P)"
+                            Style="{DynamicResource SecondaryButton}"
+                            Height="32" Padding="12,0" Margin="0,0,8,0"/>
+
+                    <Button Command="{Binding SaveTransferCommand}"
+                            Content="💾 Save Transfer (F8 / Ctrl+S)"
+                            Style="{DynamicResource PrimaryButton}"
+                            Height="32" Padding="16,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- 1. TRANSFER HEADER & ROUTE CARD -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource CardBackgroundBrush}"
+                BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16,12"
+                Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <!-- Transfer Date -->
+                    <ColumnDefinition Width="150"/>
+                    <!-- Spacer -->
+                    <ColumnDefinition Width="16"/>
+                    <!-- Source Godown -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Arrow Icon -->
+                    <ColumnDefinition Width="50"/>
+                    <!-- Target Godown -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Spacer -->
+                    <ColumnDefinition Width="16"/>
+                    <!-- Notes / Vehicle -->
+                    <ColumnDefinition Width="1.5*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Transfer Date -->
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Transfer Date" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,4"/>
+                    <DatePicker SelectedDate="{Binding TransferDate, Mode=TwoWay}" Height="30"/>
+                </StackPanel>
+
+                <!-- Source Godown (From) -->
+                <StackPanel Grid.Column="2">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="From Godown (Source)" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                        <TextBlock Text="*" Foreground="Red" Margin="2,0,0,0"/>
+                    </StackPanel>
+                    <ComboBox ItemsSource="{Binding AllGodowns}"
+                              SelectedItem="{Binding FromGodown, Mode=TwoWay}"
+                              DisplayMemberPath="Name"
+                              Height="30"/>
+                </StackPanel>
+
+                <!-- Transfer Arrow -->
+                <Viewbox Grid.Column="3" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,14,0,0">
+                    <TextBlock Text="➔" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                </Viewbox>
+
+                <!-- Target Godown (To) -->
+                <StackPanel Grid.Column="4">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="To Godown (Destination)" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                        <TextBlock Text="*" Foreground="Red" Margin="2,0,0,0"/>
+                    </StackPanel>
+                    <ComboBox ItemsSource="{Binding AllGodowns}"
+                              SelectedItem="{Binding ToGodown, Mode=TwoWay}"
+                              DisplayMemberPath="Name"
+                              Height="30"/>
+                    <!-- Conflict Warning -->
+                    <TextBlock Text="Source and Destination cannot be the same!"
+                               FontSize="10" Foreground="Red" FontWeight="SemiBold" Margin="0,2,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasGodownConflict}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Notes / Vehicle Memo -->
+                <StackPanel Grid.Column="6">
+                    <TextBlock Text="Vehicle No / Driver / Transfer Memo" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Height="30" VerticalContentAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 2. MAIN CONTENT: TABS (TRANSFER ITEMS vs TRANSFER HISTORY) -->
+        <TabControl Grid.Row="2" Background="Transparent" BorderThickness="0" Margin="0,0,0,10">
+            <!-- TAB 1: TRANSFER LINE ITEMS -->
+            <TabItem Header="📦 Transfer Items">
+                <Border Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource CardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Items DataGrid -->
+                        <DataGrid Grid.Row="0"
+                                  ItemsSource="{Binding Lines}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  BorderThickness="0"
+                                  Background="Transparent">
+                            <DataGrid.Columns>
+                                <!-- Item Name -->
+                                <DataGridTemplateColumn Header="Item / Polymer Grade" Width="2.5*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ComboBox ItemsSource="{Binding DataContext.AllItems, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                      SelectedItem="{Binding Item, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      DisplayMemberPath="ItemName"
+                                                      IsEditable="True"
+                                                      Height="28"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Pack Size (kg) -->
+                                <DataGridTemplateColumn Header="Pack Size (kg)" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ComboBox ItemsSource="{Binding AvailablePackSizes}"
+                                                      SelectedItem="{Binding PackSizeKg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEditable="True"
+                                                      Height="28"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Available Bags in Source Godown -->
+                                <DataGridTemplateColumn Header="Available in Source" Width="140">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="4" Padding="6,2" VerticalAlignment="Center" HorizontalAlignment="Left">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{DynamicResource PanelBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsOverselling}" Value="True">
+                                                                <Setter Property="Background" Value="#FFEBEE"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding AvailableBags, StringFormat='{}{0} Bags'}"
+                                                           FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsOverselling}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#C62828"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Bags to Transfer -->
+                                <DataGridTemplateColumn Header="Bags to Transfer" Width="130">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding Bags, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontWeight="Bold"
+                                                     TextAlignment="Right"
+                                                     VerticalContentAlignment="Center"
+                                                     Height="28"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Loose Kg -->
+                                <DataGridTemplateColumn Header="Loose Kg" Width="95">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding LooseKg, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.##}'}"
+                                                     TextAlignment="Right"
+                                                     VerticalContentAlignment="Center"
+                                                     Height="28"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Total Kg -->
+                                <DataGridTemplateColumn Header="Total Weight (kg)" Width="130">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding TotalKg, StringFormat='{}{0:N2} kg'}"
+                                                       FontWeight="Bold"
+                                                       VerticalAlignment="Center"
+                                                       HorizontalAlignment="Right"
+                                                       Foreground="{DynamicResource AccentBrush}"
+                                                       Margin="0,0,8,0"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Carrying Rate / Valuation -->
+                                <DataGridTemplateColumn Header="Rate / kg (₹)" Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding RatePerKg, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}"
+                                                     TextAlignment="Right"
+                                                     VerticalContentAlignment="Center"
+                                                     Height="28"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Valuation Amount -->
+                                <DataGridTemplateColumn Header="Value (₹)" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Amount, StringFormat='₹ {0:N2}'}"
+                                                       VerticalAlignment="Center"
+                                                       HorizontalAlignment="Right"
+                                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                                       Margin="0,0,8,0"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Remarks -->
+                                <DataGridTemplateColumn Header="Remarks" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding Remarks, UpdateSourceTrigger=PropertyChanged}"
+                                                     VerticalContentAlignment="Center"
+                                                     Height="28"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Delete Action -->
+                                <DataGridTemplateColumn Header="" Width="45">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.RemoveLineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="✕"
+                                                    Foreground="{DynamicResource SecondaryTextBrush}"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Cursor="Hand"
+                                                    FontSize="11"
+                                                    Width="24" Height="24"
+                                                    ToolTip="Remove Line"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Add Line Row Button -->
+                        <Border Grid.Row="1" Background="{DynamicResource PanelBrush}" Padding="12,8" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource CardBorderBrush}">
+                            <Button Command="{Binding AddLineCommand}"
+                                    Content="+ Add Line Item"
+                                    Style="{DynamicResource SecondaryButton}"
+                                    HorizontalAlignment="Left"
+                                    Height="28" Padding="12,0"/>
+                        </Border>
+                    </Grid>
+                </Border>
+            </TabItem>
+
+            <!-- TAB 2: PAST TRANSFERS HISTORY -->
+            <TabItem Header="📋 Transfer History">
+                <Border Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource CardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Search Bar -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="300"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Text="{Binding SearchHistoryText, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="30"
+                                     VerticalContentAlignment="Center"
+                                     Padding="8,0"/>
+
+                            <Button Grid.Column="2"
+                                    Command="{Binding RefreshHistoryCommand}"
+                                    Content="↻ Refresh"
+                                    Style="{DynamicResource SecondaryButton}"
+                                    Height="30" Padding="12,0"/>
+                        </Grid>
+
+                        <!-- History DataGrid -->
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding FilteredTransfers}"
+                                  SelectedItem="{Binding SelectedTransfer, Mode=TwoWay}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  SelectionMode="Single"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  Background="Transparent">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Transfer #" Binding="{Binding TransferNo}" Width="150" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="Date" Binding="{Binding TransferDate, StringFormat='dd-MMM-yyyy'}" Width="110"/>
+                                <DataGridTextColumn Header="From Godown" Binding="{Binding FromGodownName}" Width="160"/>
+                                <DataGridTextColumn Header="➔" Width="30"/>
+                                <DataGridTextColumn Header="To Godown" Binding="{Binding ToGodownName}" Width="160"/>
+                                <DataGridTextColumn Header="Total Bags" Binding="{Binding TotalBags}" Width="95"/>
+                                <DataGridTextColumn Header="Total Weight (kg)" Binding="{Binding TotalWeightKg, StringFormat='{}{0:N2}'}" Width="130"/>
+                                <DataGridTextColumn Header="Vehicle / Memo" Binding="{Binding Notes}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
+
+        <!-- 3. BOTTOM SUMMARY CARD -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource CardBackgroundBrush}"
+                BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16,10">
+            <DockPanel LastChildFill="False">
+                <!-- Status Message -->
+                <TextBlock DockPanel.Dock="Left"
+                           Text="{Binding StatusMessage}"
+                           FontSize="12"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
+                           VerticalAlignment="Center"/>
+
+                <!-- Right Summaries -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <!-- Items Count -->
+                    <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Items: " FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            <TextBlock Text="{Binding ItemCount}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Total Bags -->
+                    <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Total Bags: " FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            <TextBlock Text="{Binding TotalBags}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Total Weight -->
+                    <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10,6" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Total Weight: " FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            <TextBlock Text="{Binding TotalWeightKg, StringFormat='{}{0:N2} kg'}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Total Valuation -->
+                    <Border Background="{DynamicResource PanelBrush}" CornerRadius="6" Padding="10,6">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Valuation: " FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            <TextBlock Text="{Binding TotalAmount, StringFormat='₹ {0:N2}'}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

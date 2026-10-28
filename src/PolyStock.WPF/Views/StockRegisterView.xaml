@@ -1,0 +1,221 @@
+<UserControl x:Class="PolyStock.WPF.Views.StockRegisterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:PolyStock.WPF.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="780" d:DesignWidth="1200"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType"
+             TextOptions.TextHintingMode="Fixed">
+
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter" />
+        <conv:WeightConverter x:Key="WeightConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+    </UserControl.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <!-- 0. KPI Header Summary -->
+            <RowDefinition Height="Auto" />
+            <!-- 1. Interactive Filter Controls Card -->
+            <RowDefinition Height="Auto" />
+            <!-- 2. Main Stock Table (Summary or Detailed) -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 0. KPI HEADER SUMMARY & VIEW SWITCHER -->
+        <Border Grid.Row="0" Style="{StaticResource ModernCard}" Margin="0,0,0,12" Padding="14,10">
+            <DockPanel>
+                <!-- Left: KPI Badges -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Style="{StaticResource StatBadge}" Margin="0,0,10,0" Padding="12,6">
+                        <StackPanel>
+                            <TextBlock Text="TOTAL INVENTORY" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding TotalInventoryKg, Converter={StaticResource WeightConverter}}" FontSize="16" FontWeight="Black" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StatBadge}" Margin="0,0,10,0" Padding="12,6">
+                        <StackPanel>
+                            <TextBlock Text="TOTAL AVAILABLE BAGS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding TotalFullBags, StringFormat='{}{0} Bags'}" FontSize="16" FontWeight="Black" Foreground="{DynamicResource AccentBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StatBadge}" Padding="12,6">
+                        <StackPanel>
+                            <TextBlock Text="TOTAL VALUATION" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding TotalValuation, Converter={StaticResource CurrencyConverter}}" FontSize="16" FontWeight="Black" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Right: Actions (View Mode Switcher + Recompute, Print, Refresh) -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <!-- View Mode Toggle: Summary vs Detailed -->
+                    <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="📋 Summary"
+                                         IsChecked="{Binding IsSummaryView, Mode=TwoWay}"
+                                         Style="{StaticResource {x:Type ToggleButton}}"
+                                         Padding="12,6"
+                                         FontWeight="Bold"
+                                         FontSize="12"
+                                         Margin="0,0,2,0" />
+                            <RadioButton Content="📦 Detailed (Bag-wise)"
+                                         IsChecked="{Binding IsDetailedView, Mode=TwoWay}"
+                                         Style="{StaticResource {x:Type ToggleButton}}"
+                                         Padding="12,6"
+                                         FontWeight="Bold"
+                                         FontSize="12" />
+                        </StackPanel>
+                    </Border>
+
+                    <Button Content="⚡ Recompute Stock" Style="{StaticResource AccentButton}" Command="{Binding RebuildStockCommand}" Margin="0,0,8,0" ToolTip="Recalculate stock from raw vouchers" />
+                    <Button Content="🖨 Print Report" Style="{StaticResource SecondaryButton}" Command="{Binding PrintReportCommand}" Margin="0,0,8,0" />
+                    <Button Content="🔄 Refresh" Style="{StaticResource SecondaryButton}" Command="{Binding RefreshCommand}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- 1. MULTI-CRITERIA FILTER BAR -->
+        <Border Grid.Row="1" Style="{StaticResource ModernCard}" Margin="0,0,0,12" Padding="14,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="🔍 Filter &amp; Search Stock (Leave blank for ALL, or type partial keywords like 8x10)" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8" />
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <!-- HeadGroup -->
+                        <ColumnDefinition Width="1.2*" />
+                        <ColumnDefinition Width="10" />
+                        <!-- Brand -->
+                        <ColumnDefinition Width="1.2*" />
+                        <ColumnDefinition Width="10" />
+                        <!-- Item Name Partial Search -->
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="10" />
+                        <!-- Godown -->
+                        <ColumnDefinition Width="1.5*" />
+                        <ColumnDefinition Width="10" />
+                        <!-- Status -->
+                        <ColumnDefinition Width="1.3*" />
+                        <ColumnDefinition Width="10" />
+                        <!-- Reset Button -->
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- HeadGroup Filter -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Head Group" Style="{StaticResource FormLabel}" />
+                        <ComboBox ItemsSource="{Binding AvailableHeadGroups}"
+                                  SelectedItem="{Binding SelectedHeadGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Text="{Binding SelectedHeadGroup, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                  IsEditable="True"
+                                  ToolTip="Select or type HeadGroup (blank = All)" />
+                    </StackPanel>
+
+                    <!-- Brand Filter -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Brand" Style="{StaticResource FormLabel}" />
+                        <ComboBox ItemsSource="{Binding AvailableBrands}"
+                                  SelectedItem="{Binding SelectedBrand, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Text="{Binding SelectedBrand, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                  IsEditable="True"
+                                  ToolTip="Select or type Brand (blank = All)" />
+                    </StackPanel>
+
+                    <!-- Item Name (Partial Typing) Filter -->
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="Item Name / Keywords" Style="{StaticResource FormLabel}" />
+                        <TextBox Text="{Binding SearchItemName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Type any word or number (e.g. 8x10, Balaji 7, etc.) to filter" />
+                    </StackPanel>
+
+                    <!-- Godown Filter -->
+                    <StackPanel Grid.Column="6">
+                        <TextBlock Text="Godown / Location" Style="{StaticResource FormLabel}" />
+                        <ComboBox ItemsSource="{Binding AvailableGodowns}"
+                                  SelectedItem="{Binding SelectedGodown, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  DisplayMemberPath="Name"
+                                  ToolTip="Filter by warehouse location" />
+                    </StackPanel>
+
+                    <!-- Stock Status Filter -->
+                    <StackPanel Grid.Column="8">
+                        <TextBlock Text="Stock Status" Style="{StaticResource FormLabel}" />
+                        <ComboBox ItemsSource="{Binding AvailableStockStatuses}"
+                                  SelectedItem="{Binding SelectedStockStatus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ToolTip="Filter by availability status" />
+                    </StackPanel>
+
+                    <!-- Reset / Clear Button -->
+                    <StackPanel Grid.Column="10" VerticalAlignment="Bottom">
+                        <Button Content="✕ Clear Filters" Style="{StaticResource SecondaryButton}" Height="36" Command="{Binding ClearFiltersCommand}" ToolTip="Reset all filters to show all items" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- 2. MAIN STOCK TABLE -->
+        <Border Grid.Row="2" Style="{StaticResource ModernCard}">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ViewModeTitle}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Text=" (Live Stock Inventory)" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="6,0,0,0" />
+                    </StackPanel>
+                    <Border Background="{DynamicResource PanelBrush}" CornerRadius="4" Padding="8,3" HorizontalAlignment="Right">
+                        <TextBlock Text="{Binding FilteredItemCount, StringFormat='Showing {0} Records'}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource AccentBrush}" />
+                    </Border>
+                </DockPanel>
+
+                <!-- VIEW A: SUMMARY TABLE (Item-wise: ItemName, Group, Brand, TotalBags, TotalWt, Rate, Valuation) -->
+                <DataGrid ItemsSource="{Binding FilteredSummaryList}"
+                          SelectedItem="{Binding SelectedSummaryItem, Mode=TwoWay, TargetNullValue={x:Null}, FallbackValue={x:Null}}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          RowHeight="40"
+                          Visibility="{Binding IsSummaryView, Converter={StaticResource BoolToVisConverter}}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Item Name" Binding="{Binding ItemName}" Width="2.5*" />
+                        <DataGridTextColumn Header="Group" Binding="{Binding HeadGroupName}" Width="*" />
+                        <DataGridTextColumn Header="Brand" Binding="{Binding BrandName}" Width="*" />
+                        <DataGridTextColumn Header="Total Bags" Binding="{Binding TotalBags, StringFormat='{}{0} Bags'}" Width="120" />
+                        <DataGridTextColumn Header="Total Weight" Binding="{Binding TotalKg, Converter={StaticResource WeightConverter}}" Width="140" />
+                        <DataGridTextColumn Header="Bag Breakdown" Binding="{Binding BagBreakdownSummary}" Width="1.5*" />
+                        <DataGridTextColumn Header="Rate / kg" Binding="{Binding RatePerKg, Converter={StaticResource CurrencyConverter}}" Width="100" />
+                        <DataGridTextColumn Header="Valuation" Binding="{Binding Valuation, Converter={StaticResource CurrencyConverter}}" Width="130" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- VIEW B: DETAILED TABLE (Bag-wise: ItemName, Group, Brand, Bag Weight, Available Bags, Total Stock Weight, Rate, Valuation) -->
+                <DataGrid ItemsSource="{Binding FilteredStockList}"
+                          SelectedItem="{Binding SelectedStockItem, Mode=TwoWay, TargetNullValue={x:Null}, FallbackValue={x:Null}}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          RowHeight="38"
+                          Visibility="{Binding IsDetailedView, Converter={StaticResource BoolToVisConverter}}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Item Name" Binding="{Binding ItemName}" Width="2.5*" />
+                        <DataGridTextColumn Header="Group" Binding="{Binding HeadGroupName}" Width="*" />
+                        <DataGridTextColumn Header="Brand" Binding="{Binding BrandName}" Width="*" />
+                        <DataGridTextColumn Header="Bag Weight" Binding="{Binding PackSizeKg, StringFormat='{}{0:0.##} kg'}" Width="110" />
+                        <DataGridTextColumn Header="Available Bags" Binding="{Binding FullBags, StringFormat='{}{0} Bags'}" Width="120" />
+                        <DataGridTextColumn Header="Total Stock Weight" Binding="{Binding TotalKg, Converter={StaticResource WeightConverter}}" Width="140" />
+                        <DataGridTextColumn Header="Rate / kg" Binding="{Binding RatePerKg, Converter={StaticResource CurrencyConverter}}" Width="100" />
+                        <DataGridTextColumn Header="Valuation" Binding="{Binding Valuation, Converter={StaticResource CurrencyConverter}}" Width="130" />
+                        <DataGridTextColumn Header="Last Updated" Binding="{Binding LastUpdated, StringFormat='{}{0:dd-MMM-yy HH:mm}'}" Width="120" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

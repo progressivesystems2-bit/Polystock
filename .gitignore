@@ -1,0 +1,29 @@
+## Build and Output Folders
+bin/
+obj/
+publish/
+Releases/
+*.nupkg
+1.0.2/
+
+## Visual Studio & Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Database Backups & Locks
+*.ldb
+*.laccdb
+*backup*.accdb
+xPolyStock.accdb
+
+## OS & Office Temporary Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+~$*
+*.tmp

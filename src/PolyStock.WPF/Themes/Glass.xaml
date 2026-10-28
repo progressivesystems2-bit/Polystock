@@ -1,0 +1,64 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Surfaces -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0B1220" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#CC1E2A3A" />
+    <SolidColorBrush x:Key="CardBorderBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#E61E2A3A" />
+    <SolidColorBrush x:Key="HeaderBorderBrush" Color="#2AFFFFFF" />
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#E6EAF2" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#9FACC0" />
+
+    <!-- Accent -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#7C3AED" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#8B5CF6" />
+    <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFF" />
+    <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#6366F1" Offset="0" />
+        <GradientStop Color="#22D3EE" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Inputs -->
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#CC1B2438" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="#40FFFFFF" />
+    <SolidColorBrush x:Key="InputPlaceholderBrush" Color="#8A97AB" />
+    <SolidColorBrush x:Key="InputCaretBrush" Color="#E6EAF2" />
+
+    <!-- Panels / tiles -->
+    <SolidColorBrush x:Key="PanelBrush" Color="#CC1E2A3A" />
+
+    <!-- Top bar -->
+    <LinearGradientBrush x:Key="TopBarBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#141D30" Offset="0" />
+        <GradientStop Color="#0F1727" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="TopBarBorderBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="TopBarTextBrush" Color="#E6EAF2" />
+    <SolidColorBrush x:Key="TopBarSubTextBrush" Color="#9FACC0" />
+    <SolidColorBrush x:Key="TopBarOnDarkTextBrush" Color="#E8EDF4" />
+    <SolidColorBrush x:Key="TopBarSearchBgBrush" Color="#26FFFFFF" />
+    <SolidColorBrush x:Key="TopBarSearchBorderBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="TopBarSearchTextBrush" Color="#E6EAF2" />
+    <SolidColorBrush x:Key="TopBarSearchPlaceholderBrush" Color="#93A2B8" />
+    <SolidColorBrush x:Key="TopBarSearchCaretBrush" Color="#7C3AED" />
+    <SolidColorBrush x:Key="TopBarSearchIconBrush" Color="#A78BFA" />
+    <SolidColorBrush x:Key="TopBarGlassBgBrush" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="TopBarGlassBorderBrush" Color="#2AFFFFFF" />
+    <SolidColorBrush x:Key="TopBarGlassHoverBrush" Color="#30B98EFF" />
+    <SolidColorBrush x:Key="TopBarButtonTextBrush" Color="#E6EAF2" />
+    <SolidColorBrush x:Key="TopBarButtonHoverTextBrush" Color="#FFFFFF" />
+
+    <!-- Status bar -->
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#0F1727" />
+    <SolidColorBrush x:Key="StatusBarTextBrush" Color="#B9C4D4" />
+    <SolidColorBrush x:Key="StatusBarMutedBrush" Color="#5A6A80" />
+
+    <!-- Misc -->
+    <SolidColorBrush x:Key="SeparatorBrush" Color="#2AFFFFFF" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#34D399" />
+    <SolidColorBrush x:Key="ErrorBrush" Color="#FCA5A5" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#22FFFFFF" />
+</ResourceDictionary>
