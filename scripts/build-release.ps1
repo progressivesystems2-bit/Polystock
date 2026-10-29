@@ -14,7 +14,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$Version = "1.0.2",
+    [string]$Version = "1.0.3",
     [switch]$Clean,
     [string]$OutputDir = "Releases"
 )
@@ -92,9 +92,12 @@ if (-not $Clean) {
         if ([string]::IsNullOrWhiteSpace($token)) {
             $token = [Environment]::GetEnvironmentVariable("GITHUB_TOKEN", "Machine")
         }
+        if ([string]::IsNullOrWhiteSpace($token) -and (Get-Command "gh" -ErrorAction SilentlyContinue)) {
+            $token = (& gh auth token 2>$null)
+        }
         $tokenArgs = @()
         if (![string]::IsNullOrWhiteSpace($token)) {
-            $tokenArgs = @("--token", $token)
+            $tokenArgs = @("--token", $token.Trim())
         }
         vpk download github --repoUrl $repoUrl --outputDir $releasesDir @tokenArgs 2>$null
         Write-Host "Existing release feed synchronized successfully." -ForegroundColor Green

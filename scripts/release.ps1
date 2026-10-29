@@ -39,9 +39,15 @@ if ([string]::IsNullOrWhiteSpace($Token)) {
 if ([string]::IsNullOrWhiteSpace($Token)) {
     $Token = [Environment]::GetEnvironmentVariable("GITHUB_TOKEN", "Machine")
 }
+if ([string]::IsNullOrWhiteSpace($Token) -and (Get-Command "gh" -ErrorAction SilentlyContinue)) {
+    $Token = (& gh auth token 2>$null)
+}
+if (![string]::IsNullOrWhiteSpace($Token)) {
+    $Token = $Token.Trim()
+}
 
 if ([string]::IsNullOrWhiteSpace($Token)) {
-    Write-Error "GitHub Token not found. Please provide -Token parameter or set `$env:GITHUB_TOKEN environment variable."
+    Write-Error "GitHub Token not found. Please provide -Token parameter, set `$env:GITHUB_TOKEN environment variable, or login via 'gh auth login'."
     exit 1
 }
 
